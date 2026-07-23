@@ -1,8 +1,5 @@
-import fs from 'fs';
-import path from 'path';
+import db from '../db';
 import { v4 as uuidv4 } from 'uuid';
-
-const DATA_FILE = path.join(__dirname, '..', '..', 'data', 'users.json');
 
 export interface User {
   id: string;
@@ -12,34 +9,22 @@ export interface User {
   createdAt: string;
 }
 
-function readUsers(): User[] {
-  try {
-    const raw = fs.readFileSync(DATA_FILE, 'utf-8');
-    return JSON.parse(raw) as User[];
-  } catch (e) {
-    return [];
-  }
-}
-
-function writeUsers(users: User[]) {
-  fs.mkdirSync(path.dirname(DATA_FILE), { recursive: true });
-  fs.writeFileSync(DATA_FILE, JSON.stringify(users, null, 2));
-}
-
 export function findUserByEmail(email: string): User | undefined {
-  const users = readUsers();
-  return users.find(u => u.email.toLowerCase() === email.toLowerCase());
+  const row = db.prepare('SELECT id, email, passwordHash, name, createdAt FROM users WHERE lower(email)=lower(?)').get(email);
+  if (!row) return undefined;
+  return { id: row.id, email: row.email, passwordHash: row.passwordHash, name: row.name, createdAt: row.createdAt } as User;
 }
 
 export function findUserById(id: string): User | undefined {
-  const users = readUsers();
-  return users.find(u => u.id === id);
+  const row = db.prepare('SELECT id, email, passwordHash, name, createdAt FROM users WHERE id = ?').get(id);
+  if (!row) return undefined;
+  return { id: row.id, email: row.email, passwordHash: row.passwordHash, name: row.name, createdAt: row.createdAt } as User;
 }
 
 export function createUser(email: string, passwordHash: string, name?: string): User {
-  const users = readUsers();
-  const user: User = { id: uuidv4(), email, passwordHash, name, createdAt: new Date().toISOString() };
-  users.push(user);
-  writeUsers(users);
-  return user;
+  const id = uuidv4();
+  const now = new Date().toISOString();
+  const stmt = db.prepare('INSERT INTO users (id, email, passwordHash, name, createdAt) VALUES (?, ?, ?, ?, ?)');
+  stmt.run(id, email, passwordHash, name, now);
+  return { id, email, passwordHash, name, createdAt: now } as User;
 }
