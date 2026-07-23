@@ -1,0 +1,9 @@
+{
+  "name": "wealth-planner-mvp",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "start:backend": "cd backend && npm run start",
+    "dev:backend": "cd backend && npm run dev"
+  }
+}
