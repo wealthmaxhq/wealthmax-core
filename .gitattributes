@@ -1,0 +1,35 @@
+# Auto-detect text files
+* text=auto
+
+# Source code
+*.dart text eol=lf
+
+# Flutter / Dart configs
+*.yaml text eol=lf
+*.yml text eol=lf
+
+# Documentation
+*.md text eol=lf
+
+# JSON
+*.json text eol=lf
+
+# Text
+*.txt text eol=lf
+
+# Windows scripts
+*.bat text eol=crlf
+*.cmd text eol=crlf
+*.ps1 text eol=crlf
+
+# Images (binary)
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.webp binary
+*.ico binary
+
+# Archives
+*.zip binary
+*.jar binary
