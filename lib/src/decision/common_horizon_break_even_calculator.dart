@@ -8,6 +8,7 @@ import '../rounding/rounding_policy.dart';
 import 'break_even_return_input.dart';
 import 'common_horizon_break_even_result.dart';
 import 'common_horizon_strategy_calculator.dart';
+import 'common_horizon_strategy_preparation.dart';
 import 'common_horizon_strategy_result.dart';
 import 'hybrid_strategy_input.dart';
 
@@ -35,11 +36,37 @@ final class CommonHorizonBreakEvenCalculator {
     BreakEvenReturnInput input, {
     required DateTime calculatedAt,
   }) {
-    final zeroEvaluation = _evaluate(
-      input,
-      Decimal.zero,
+    final strategyCalculator = CommonHorizonStrategyCalculator(
+      roundingPolicy: roundingPolicy,
+      calculationScale: calculationScale,
+      maximumIterations: maximumIterations,
+    );
+    final preparation = strategyCalculator.prepare(
+      HybridStrategyInput(
+        loan: input.loan,
+        extraCash: input.extraCash,
+        decisionInstallment: input.decisionInstallment,
+        grossAnnualInvestmentReturn: Percentage.fromFraction('0'),
+        annualExpenseRatio: input.annualExpenseRatio,
+        allocationStepPercent: 100,
+      ),
       calculatedAt: calculatedAt,
     );
+    final zeroEvaluation = _BreakEvenEvaluation(
+      grossFraction: Decimal.zero,
+      comparison: preparation.template,
+    );
+    var strategyRevaluationCount = 0;
+    _BreakEvenEvaluation evaluate(Decimal grossFraction) {
+      strategyRevaluationCount++;
+      return _evaluatePrepared(
+        strategyCalculator,
+        preparation,
+        input.annualExpenseRatio,
+        grossFraction,
+      );
+    }
+
     if (!zeroEvaluation
             .comparison
             .allPrepayScenario
@@ -56,7 +83,7 @@ final class CommonHorizonBreakEvenCalculator {
 
     final currency = input.loan.principal.currency;
     final moneyTolerance = Decimal.one.shift(-currency.decimalPlaces);
-    var lower = _evaluate(input, -Decimal.one, calculatedAt: calculatedAt);
+    var lower = evaluate(-Decimal.one);
     if (lower.difference.amount > moneyTolerance) {
       throw StateError(
         'All-invest already exceeds all-prepay at a -100% gross return.',
@@ -64,11 +91,7 @@ final class CommonHorizonBreakEvenCalculator {
     }
 
     var upperGrossFraction = Decimal.one;
-    var upper = _evaluate(
-      input,
-      upperGrossFraction,
-      calculatedAt: calculatedAt,
-    );
+    var upper = evaluate(upperGrossFraction);
     for (
       var expansion = 0;
       upper.difference.amount < -moneyTolerance && expansion < 64;
@@ -76,7 +99,7 @@ final class CommonHorizonBreakEvenCalculator {
     ) {
       upperGrossFraction =
           (upperGrossFraction + Decimal.one) * Decimal.fromInt(2) - Decimal.one;
-      upper = _evaluate(input, upperGrossFraction, calculatedAt: calculatedAt);
+      upper = evaluate(upperGrossFraction);
     }
     if (upper.difference.amount < -moneyTolerance) {
       throw StateError('Unable to bracket the normalized break-even return.');
@@ -88,11 +111,7 @@ final class CommonHorizonBreakEvenCalculator {
       final midpointFraction =
           ((lower.grossFraction + upper.grossFraction) / Decimal.fromInt(2))
               .toDecimal(scaleOnInfinitePrecision: calculationScale);
-      final midpoint = _evaluate(
-        input,
-        midpointFraction,
-        calculatedAt: calculatedAt,
-      );
+      final midpoint = evaluate(midpointFraction);
       best = _closer(best, midpoint);
       if (midpoint.difference.amount.abs() <= moneyTolerance) {
         best = midpoint;
@@ -191,6 +210,8 @@ final class CommonHorizonBreakEvenCalculator {
           'cashFlowTimingNormalized': true,
           'savedPaymentTreatment': 'fullyReinvestedToCommonHorizon',
           'solver': 'bisection',
+          'loanScenarioPreparationReused': true,
+          'loanScenarioPreparationScope': 'allReturnEvaluations',
           'lowerGrossReturnBoundPercent': '-100',
           'upperBoundExpansion': 'doublingAnnualGrowthFactor',
           'reconciliationTolerance': 'oneCurrencyMinorUnit',
@@ -240,37 +261,30 @@ final class CommonHorizonBreakEvenCalculator {
               .toString(),
           'calculationScale': calculationScale,
           'maximumIterations': maximumIterations,
+          'loanScenarioPreparationCount': 1,
+          'strategyRevaluationCount': strategyRevaluationCount,
+          'avoidedLoanScenarioRebuildCount': strategyRevaluationCount,
         },
       ),
     );
   }
 
-  _BreakEvenEvaluation _evaluate(
-    BreakEvenReturnInput input,
-    Decimal grossFraction, {
-    required DateTime calculatedAt,
-  }) {
-    final calculation =
-        CommonHorizonStrategyCalculator(
-          roundingPolicy: roundingPolicy,
-          calculationScale: calculationScale,
-          maximumIterations: maximumIterations,
-        ).calculate(
-          HybridStrategyInput(
-            loan: input.loan,
-            extraCash: input.extraCash,
-            decisionInstallment: input.decisionInstallment,
-            grossAnnualInvestmentReturn: Percentage.fromFraction(
-              grossFraction.toString(),
-            ),
-            annualExpenseRatio: input.annualExpenseRatio,
-            allocationStepPercent: 100,
-          ),
-          calculatedAt: calculatedAt,
-        );
+  _BreakEvenEvaluation _evaluatePrepared(
+    CommonHorizonStrategyCalculator calculator,
+    CommonHorizonStrategyPreparation preparation,
+    Percentage annualExpenseRatio,
+    Decimal grossFraction,
+  ) {
+    final comparison = calculator.revaluePrepared(
+      preparation,
+      grossAnnualInvestmentReturn: Percentage.fromFraction(
+        grossFraction.toString(),
+      ),
+      annualExpenseRatio: annualExpenseRatio,
+    );
     return _BreakEvenEvaluation(
       grossFraction: grossFraction,
-      comparison: calculation.value,
+      comparison: comparison,
     );
   }
 
