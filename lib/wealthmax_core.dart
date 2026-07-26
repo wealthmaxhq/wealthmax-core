@@ -13,6 +13,7 @@ export 'src/decision/common_horizon_decision_analysis_result.dart';
 export 'src/decision/common_horizon_sensitivity_calculator.dart';
 export 'src/decision/common_horizon_sensitivity_result.dart';
 export 'src/decision/common_horizon_strategy_calculator.dart';
+export 'src/decision/common_horizon_strategy_preparation.dart';
 export 'src/decision/common_horizon_strategy_result.dart';
 export 'src/decision/common_horizon_strategy_selection_calculator.dart';
 export 'src/decision/common_horizon_strategy_selection_input.dart';
