@@ -5,6 +5,8 @@ export 'src/currency/currency.dart';
 export 'src/decision/break_even_return_calculator.dart';
 export 'src/decision/break_even_return_input.dart';
 export 'src/decision/break_even_return_result.dart';
+export 'src/decision/common_horizon_break_even_calculator.dart';
+export 'src/decision/common_horizon_break_even_result.dart';
 export 'src/decision/common_horizon_strategy_calculator.dart';
 export 'src/decision/common_horizon_strategy_result.dart';
 export 'src/decision/hybrid_strategy_calculator.dart';
