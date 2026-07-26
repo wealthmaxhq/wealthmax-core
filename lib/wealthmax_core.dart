@@ -9,6 +9,8 @@ export 'src/loan/emi_calculator.dart';
 export 'src/loan/emi_change_calculator.dart';
 export 'src/loan/emi_change_result.dart';
 export 'src/loan/emi_payment_period.dart';
+export 'src/loan/effective_rate_calculator.dart';
+export 'src/loan/effective_rate_result.dart';
 export 'src/loan/interest_rate_change.dart';
 export 'src/loan/loan_input.dart';
 export 'src/loan/loan_prepayment_result.dart';
