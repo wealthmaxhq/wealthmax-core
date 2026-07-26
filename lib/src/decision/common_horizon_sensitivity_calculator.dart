@@ -55,26 +55,33 @@ final class CommonHorizonSensitivityCalculator {
       calculationScale: calculationScale,
       maximumIterations: maximumIterations,
     );
-    final points = input.grossAnnualReturnScenarios
-        .map(
-          (scenario) => CommonHorizonSensitivityPoint(
-            grossAnnualReturn: scenario,
-            comparison: comparisonCalculator
-                .calculate(
-                  HybridStrategyInput(
-                    loan: input.loan,
-                    extraCash: input.extraCash,
-                    decisionInstallment: input.decisionInstallment,
-                    grossAnnualInvestmentReturn: scenario,
-                    annualExpenseRatio: input.annualExpenseRatio,
-                    allocationStepPercent: 100,
-                  ),
-                  calculatedAt: calculatedAt,
-                )
-                .value,
+    final firstReturn = input.grossAnnualReturnScenarios.first;
+    final preparation = comparisonCalculator.prepare(
+      HybridStrategyInput(
+        loan: input.loan,
+        extraCash: input.extraCash,
+        decisionInstallment: input.decisionInstallment,
+        grossAnnualInvestmentReturn: firstReturn,
+        annualExpenseRatio: input.annualExpenseRatio,
+        allocationStepPercent: 100,
+      ),
+      calculatedAt: calculatedAt,
+    );
+    final points = <CommonHorizonSensitivityPoint>[
+      CommonHorizonSensitivityPoint(
+        grossAnnualReturn: firstReturn,
+        comparison: preparation.template,
+      ),
+      for (final scenario in input.grossAnnualReturnScenarios.skip(1))
+        CommonHorizonSensitivityPoint(
+          grossAnnualReturn: scenario,
+          comparison: comparisonCalculator.revaluePrepared(
+            preparation,
+            grossAnnualInvestmentReturn: scenario,
+            annualExpenseRatio: input.annualExpenseRatio,
           ),
-        )
-        .toList(growable: false);
+        ),
+    ];
     final result = CommonHorizonSensitivityResult(
       breakEven: breakEven,
       annualExpenseRatio: input.annualExpenseRatio,
@@ -153,6 +160,8 @@ final class CommonHorizonSensitivityCalculator {
           'comparisonHorizon': 'baselineLoanPayoffInstallment',
           'cashFlowTimingNormalized': true,
           'savedPaymentTreatment': 'fullyReinvestedToCommonHorizon',
+          'loanScenarioPreparationReused': true,
+          'loanScenarioPreparationScope': 'sensitivityReturnGrid',
           'breakEvenFormulaId': CommonHorizonBreakEvenCalculator.formulaId,
           'comparisonFormulaId': CommonHorizonStrategyCalculator.formulaId,
           'feeConvention': 'endOfYearAssetBasedFee',
@@ -165,6 +174,9 @@ final class CommonHorizonSensitivityCalculator {
         },
         details: <String, Object?>{
           'scenarioCount': points.length,
+          'loanScenarioPreparationCount': 1,
+          'strategyRevaluationCount': points.length - 1,
+          'avoidedLoanScenarioRebuildCount': points.length - 1,
           'commonHorizonInstallment':
               breakEven.comparison.commonHorizonInstallment,
           'breakEvenGrossAnnualReturnPercent': breakEven
