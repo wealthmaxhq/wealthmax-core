@@ -57,14 +57,22 @@ final class AmortizationSchedule {
 
   Money get totalInterest => _sum((entry) => entry.interest);
 
-  Money get totalPrincipal => _sum((entry) => entry.principal);
+  Money get totalPrincipal =>
+      _sum((entry) => entry.principal + entry.prepayment);
 
-  Money get totalPayment => _sum((entry) => entry.payment);
+  Money get totalScheduledPayments => _sum((entry) => entry.payment);
+
+  Money get totalPrepayment => _sum((entry) => entry.prepayment);
+
+  Money get totalPayment => _sum((entry) => entry.totalCashFlow);
 
   Money get closingBalance =>
       entries.isEmpty ? financedPrincipal : entries.last.closingBalance;
 
   Money? get finalPayment => entries.isEmpty ? null : entries.last.payment;
+
+  Money? get finalCashFlow =>
+      entries.isEmpty ? null : entries.last.totalCashFlow;
 
   Money _sum(Money Function(AmortizationEntry entry) select) {
     var result = Money.zero(financedPrincipal.currency);
@@ -147,6 +155,7 @@ final class AmortizationSchedule {
         'financedPrincipal: $financedPrincipal, '
         'paymentCount: $paymentCount, '
         'totalInterest: $totalInterest, '
+        'totalPrepayment: $totalPrepayment, '
         'totalPayment: $totalPayment, '
         'closingBalance: $closingBalance'
         ')';

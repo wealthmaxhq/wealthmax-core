@@ -11,6 +11,7 @@ final class AmortizationEntry {
     required Money payment,
     required Money interest,
     required Money principal,
+    Money? prepayment,
     required Money closingBalance,
   }) {
     if (installmentNumber <= 0) {
@@ -21,11 +22,13 @@ final class AmortizationEntry {
       );
     }
 
+    final appliedPrepayment = prepayment ?? Money.zero(openingBalance.currency);
     final values = <String, Money>{
       'openingBalance': openingBalance,
       'payment': payment,
       'interest': interest,
       'principal': principal,
+      'prepayment': appliedPrepayment,
       'closingBalance': closingBalance,
     };
     for (final entry in values.entries) {
@@ -49,9 +52,10 @@ final class AmortizationEntry {
     if (payment != interest + principal) {
       throw ArgumentError('Payment must equal interest plus principal.');
     }
-    if (openingBalance != principal + closingBalance) {
+    if (openingBalance != principal + appliedPrepayment + closingBalance) {
       throw ArgumentError(
-        'Opening balance must equal principal plus closing balance.',
+        'Opening balance must equal principal plus prepayment plus '
+        'closing balance.',
       );
     }
 
@@ -61,6 +65,7 @@ final class AmortizationEntry {
       payment: payment,
       interest: interest,
       principal: principal,
+      prepayment: appliedPrepayment,
       closingBalance: closingBalance,
     );
   }
@@ -71,6 +76,7 @@ final class AmortizationEntry {
     required this.payment,
     required this.interest,
     required this.principal,
+    required this.prepayment,
     required this.closingBalance,
   });
 
@@ -79,7 +85,14 @@ final class AmortizationEntry {
   final Money payment;
   final Money interest;
   final Money principal;
+
+  /// Extra principal paid after the scheduled installment.
+  final Money prepayment;
+
   final Money closingBalance;
+
+  /// Total cash paid during this installment.
+  Money get totalCashFlow => payment + prepayment;
 
   @override
   bool operator ==(Object other) {
@@ -90,6 +103,7 @@ final class AmortizationEntry {
             payment == other.payment &&
             interest == other.interest &&
             principal == other.principal &&
+            prepayment == other.prepayment &&
             closingBalance == other.closingBalance;
   }
 
@@ -100,6 +114,7 @@ final class AmortizationEntry {
     payment,
     interest,
     principal,
+    prepayment,
     closingBalance,
   );
 
@@ -111,6 +126,7 @@ final class AmortizationEntry {
         'payment: $payment, '
         'interest: $interest, '
         'principal: $principal, '
+        'prepayment: $prepayment, '
         'closingBalance: $closingBalance'
         ')';
   }

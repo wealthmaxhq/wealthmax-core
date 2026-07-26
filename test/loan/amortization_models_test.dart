@@ -75,7 +75,7 @@ void main() {
         entry().toString(),
         'AmortizationEntry(installmentNumber: 1, '
         'openingBalance: INR 100, payment: INR 11, interest: INR 1, '
-        'principal: INR 10, closingBalance: INR 90)',
+        'principal: INR 10, prepayment: INR 0, closingBalance: INR 90)',
       );
     });
   });

@@ -8,6 +8,7 @@ import 'amortization_entry.dart';
 import 'amortization_schedule.dart';
 import 'emi_calculator.dart';
 import 'loan_input.dart';
+import 'scheduled_prepayment.dart';
 
 /// Builds a month-by-month reducing-balance amortization schedule.
 @immutable
@@ -26,7 +27,13 @@ final class AmortizationCalculator {
   CalculationResult<AmortizationSchedule> calculate(
     LoanInput input, {
     required DateTime calculatedAt,
+    PrepaymentPlan? prepaymentPlan,
   }) {
+    final plan = prepaymentPlan ?? PrepaymentPlan.empty();
+    plan.validateFor(
+      currency: input.principal.currency,
+      tenureMonths: input.tenureMonths,
+    );
     final emiResult = EmiCalculator(
       roundingPolicy: roundingPolicy,
       calculationScale: calculationScale,
@@ -35,7 +42,11 @@ final class AmortizationCalculator {
 
     final entries = financedPrincipal.isZero
         ? const <AmortizationEntry>[]
-        : _buildEntries(input, scheduledEmi: emiResult.value.emi);
+        : _buildEntries(
+            input,
+            scheduledEmi: emiResult.value.emi,
+            prepaymentPlan: plan,
+          );
     final schedule = AmortizationSchedule(
       scheduledEmi: emiResult.value.emi,
       financedPrincipal: financedPrincipal,
@@ -63,6 +74,8 @@ final class AmortizationCalculator {
           'rateConvention': 'nominalAnnualRateDividedBy12',
           'componentRounding': 'eachInstallment',
           'finalPaymentAdjustment': true,
+          'prepaymentTiming': 'afterScheduledInstallment',
+          'prepaymentEffect': 'reduceTenure',
           'roundingPolicy': roundingPolicy.name,
         },
         details: <String, Object?>{
@@ -70,6 +83,7 @@ final class AmortizationCalculator {
           'scheduledEmi': schedule.scheduledEmi.amount.toString(),
           'paymentCount': schedule.paymentCount,
           'totalPrincipal': schedule.totalPrincipal.amount.toString(),
+          'totalPrepayment': schedule.totalPrepayment.amount.toString(),
           'totalInterest': schedule.totalInterest.amount.toString(),
           'totalPayment': schedule.totalPayment.amount.toString(),
           'calculationScale': calculationScale,
@@ -81,6 +95,7 @@ final class AmortizationCalculator {
   List<AmortizationEntry> _buildEntries(
     LoanInput input, {
     required Money scheduledEmi,
+    required PrepaymentPlan prepaymentPlan,
   }) {
     final currency = input.principal.currency;
     final decimalPlaces = currency.decimalPlaces;
@@ -118,7 +133,16 @@ final class AmortizationCalculator {
         );
       }
 
-      final closingBalance = openingBalance - principal;
+      final balanceAfterScheduledPayment = openingBalance - principal;
+      final requestedPrepayment = prepaymentPlan.totalForInstallment(
+        installmentNumber,
+        currency,
+      );
+      final appliedPrepayment =
+          requestedPrepayment.compareTo(balanceAfterScheduledPayment) > 0
+          ? balanceAfterScheduledPayment
+          : requestedPrepayment;
+      final closingBalance = balanceAfterScheduledPayment - appliedPrepayment;
       entries.add(
         AmortizationEntry(
           installmentNumber: installmentNumber,
@@ -126,6 +150,7 @@ final class AmortizationCalculator {
           payment: payment,
           interest: interest,
           principal: principal,
+          prepayment: appliedPrepayment,
           closingBalance: closingBalance,
         ),
       );
