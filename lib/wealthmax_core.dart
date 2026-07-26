@@ -2,6 +2,9 @@ library;
 
 export 'src/calculation/calculation_result.dart';
 export 'src/currency/currency.dart';
+export 'src/investment/lump_sum_calculator.dart';
+export 'src/investment/lump_sum_input.dart';
+export 'src/investment/lump_sum_result.dart';
 export 'src/loan/amortization_calculator.dart';
 export 'src/loan/amortization_entry.dart';
 export 'src/loan/amortization_schedule.dart';
