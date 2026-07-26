@@ -57,6 +57,66 @@ void main() {
       );
     });
 
+    test('prepared grid exactly matches independent full calculations', () {
+      final source = input();
+      const calculator = CommonHorizonStrategyCalculator();
+
+      for (final point in defaultCalculation.value.points) {
+        final direct = calculator
+            .calculate(
+              HybridStrategyInput(
+                loan: source.loan,
+                extraCash: source.extraCash,
+                decisionInstallment: source.decisionInstallment,
+                grossAnnualInvestmentReturn: point.grossAnnualReturn,
+                annualExpenseRatio: source.annualExpenseRatio,
+                allocationStepPercent: 100,
+              ),
+              calculatedAt: calculatedAt,
+            )
+            .value;
+
+        expect(point.comparison, direct);
+      }
+    });
+
+    test('reuses loan scenarios across the sensitivity return grid', () {
+      final points = defaultCalculation.value.points;
+      final firstAllInvest =
+          points.first.comparison.allInvestScenario.allocation.loanPrepayment;
+      final firstAllPrepay =
+          points.first.comparison.allPrepayScenario.allocation.loanPrepayment;
+
+      for (final point in points.skip(1)) {
+        expect(
+          point.comparison.allInvestScenario.allocation.loanPrepayment,
+          same(firstAllInvest),
+        );
+        expect(
+          point.comparison.allPrepayScenario.allocation.loanPrepayment,
+          same(firstAllPrepay),
+        );
+      }
+      expect(
+        defaultCalculation
+            .metadata
+            .assumptions['loanScenarioPreparationReused'],
+        isTrue,
+      );
+      expect(
+        defaultCalculation.metadata.details['loanScenarioPreparationCount'],
+        1,
+      );
+      expect(
+        defaultCalculation.metadata.details['strategyRevaluationCount'],
+        points.length - 1,
+      );
+      expect(
+        defaultCalculation.metadata.details['avoidedLoanScenarioRebuildCount'],
+        points.length - 1,
+      );
+    });
+
     test('favors prepay below and invest above the normalized threshold', () {
       final result = defaultCalculation.value;
 
