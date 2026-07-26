@@ -37,12 +37,8 @@ final class CommonHorizonStrategySelectionCalculator {
       maximumIterations: maximumIterations,
     ).calculate(input.hybridStrategy, calculatedAt: calculatedAt);
     final optimization = strategyCalculation.value;
-    final selectedIndex = _selectIndex(optimization, input.objective);
-    final result = CommonHorizonStrategySelectionResult(
-      optimization: optimization,
-      objective: input.objective,
-      selectedScenarioIndex: selectedIndex,
-    );
+    final result = selectFrom(optimization, input.objective);
+    final selectedIndex = result.selectedScenarioIndex;
 
     return CalculationResult<CommonHorizonStrategySelectionResult>(
       value: result,
@@ -149,6 +145,21 @@ final class CommonHorizonStrategySelectionCalculator {
           'maximumIterations': maximumIterations,
         },
       ),
+    );
+  }
+
+  /// Applies the documented objective rules to an already evaluated grid.
+  ///
+  /// This allows higher-level analyses to reuse a common-horizon strategy
+  /// calculation instead of recalculating identical scenarios.
+  CommonHorizonStrategySelectionResult selectFrom(
+    CommonHorizonStrategyResult optimization,
+    CommonHorizonStrategyObjective objective,
+  ) {
+    return CommonHorizonStrategySelectionResult(
+      optimization: optimization,
+      objective: objective,
+      selectedScenarioIndex: _selectIndex(optimization, objective),
     );
   }
 
