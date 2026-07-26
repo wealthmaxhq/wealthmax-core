@@ -1,5 +1,6 @@
 library;
 
+export 'src/calculation/calculation_result.dart';
 export 'src/currency/currency.dart';
 export 'src/money/money.dart';
 export 'src/percentage/percentage.dart';
