@@ -19,8 +19,7 @@ final class EffectiveRateCalculator {
     this.roundingPolicy = RoundingPolicy.halfUp,
     this.calculationScale = 32,
     this.maximumIterations = 256,
-  }) : assert(calculationScale > 0),
-       assert(maximumIterations > 0);
+  });
 
   static const String formulaId = 'LN-007';
   static const String formulaVersion = '1.0.0';
@@ -33,6 +32,21 @@ final class EffectiveRateCalculator {
     LoanInput input, {
     required DateTime calculatedAt,
   }) {
+    if (calculationScale <= 0) {
+      throw ArgumentError.value(
+        calculationScale,
+        'calculationScale',
+        'Must be greater than zero.',
+      );
+    }
+    if (maximumIterations <= 0) {
+      throw ArgumentError.value(
+        maximumIterations,
+        'maximumIterations',
+        'Must be greater than zero.',
+      );
+    }
+
     final financedPrincipal = input.financedPrincipal;
     if (!financedPrincipal.isPositive) {
       throw ArgumentError.value(

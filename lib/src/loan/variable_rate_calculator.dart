@@ -20,7 +20,7 @@ final class VariableRateCalculator {
   const VariableRateCalculator({
     this.roundingPolicy = RoundingPolicy.halfUp,
     this.calculationScale = 32,
-  }) : assert(calculationScale > 0);
+  });
 
   static const String formulaId = 'LN-004';
   static const String formulaVersion = '1.0.0';
@@ -34,6 +34,14 @@ final class VariableRateCalculator {
     required DateTime calculatedAt,
     PrepaymentPlan? prepaymentPlan,
   }) {
+    if (calculationScale <= 0) {
+      throw ArgumentError.value(
+        calculationScale,
+        'calculationScale',
+        'Must be greater than zero.',
+      );
+    }
+
     interestRatePlan.validateForTenure(input.tenureMonths);
     final prepayments = prepaymentPlan ?? PrepaymentPlan.empty();
     prepayments.validateFor(
