@@ -6,6 +6,7 @@ import '../loan/amortization_schedule.dart';
 import '../money/money.dart';
 import '../percentage/percentage.dart';
 import '../rounding/rounding_policy.dart';
+import 'calculator_configuration.dart';
 import 'common_horizon_strategy_preparation.dart';
 import 'common_horizon_strategy_result.dart';
 import 'hybrid_strategy_calculator.dart';
@@ -22,8 +23,7 @@ final class CommonHorizonStrategyCalculator {
     this.roundingPolicy = RoundingPolicy.halfUp,
     this.calculationScale = 32,
     this.maximumIterations = 256,
-  }) : assert(calculationScale > 0),
-       assert(maximumIterations > 0);
+  });
 
   static const String formulaId = 'OPT-007';
   static const String formulaVersion = '1.0.0';
@@ -113,6 +113,10 @@ final class CommonHorizonStrategyCalculator {
     HybridStrategyInput input, {
     required DateTime calculatedAt,
   }) {
+    validateDecisionCalculatorConfiguration(
+      calculationScale: calculationScale,
+      maximumIterations: maximumIterations,
+    );
     final hybridCalculation = HybridStrategyCalculator(
       roundingPolicy: roundingPolicy,
       calculationScale: calculationScale,

@@ -7,6 +7,7 @@ import '../loan/scheduled_prepayment.dart';
 import '../money/money.dart';
 import '../percentage/percentage.dart';
 import '../rounding/rounding_policy.dart';
+import 'calculator_configuration.dart';
 import 'opportunity_cost_input.dart';
 import 'opportunity_cost_result.dart';
 
@@ -20,8 +21,7 @@ final class OpportunityCostCalculator {
     this.roundingPolicy = RoundingPolicy.halfUp,
     this.calculationScale = 32,
     this.maximumIterations = 256,
-  }) : assert(calculationScale > 0),
-       assert(maximumIterations > 0);
+  });
 
   static const String formulaId = 'OPT-001';
   static const String formulaVersion = '1.0.0';
@@ -34,6 +34,10 @@ final class OpportunityCostCalculator {
     OpportunityCostInput input, {
     required DateTime calculatedAt,
   }) {
+    validateDecisionCalculatorConfiguration(
+      calculationScale: calculationScale,
+      maximumIterations: maximumIterations,
+    );
     final plan = PrepaymentPlan(<ScheduledPrepayment>[
       ScheduledPrepayment(
         installmentNumber: input.decisionInstallment,

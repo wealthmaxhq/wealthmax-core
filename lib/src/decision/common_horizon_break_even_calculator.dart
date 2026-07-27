@@ -6,6 +6,7 @@ import '../money/money.dart';
 import '../percentage/percentage.dart';
 import '../rounding/rounding_policy.dart';
 import 'break_even_return_input.dart';
+import 'calculator_configuration.dart';
 import 'common_horizon_break_even_result.dart';
 import 'common_horizon_strategy_calculator.dart';
 import 'common_horizon_strategy_preparation.dart';
@@ -22,8 +23,7 @@ final class CommonHorizonBreakEvenCalculator {
     this.roundingPolicy = RoundingPolicy.halfUp,
     this.calculationScale = 32,
     this.maximumIterations = 256,
-  }) : assert(calculationScale > 0),
-       assert(maximumIterations > 0);
+  });
 
   static const String formulaId = 'OPT-008';
   static const String formulaVersion = '1.0.0';
@@ -36,6 +36,10 @@ final class CommonHorizonBreakEvenCalculator {
     BreakEvenReturnInput input, {
     required DateTime calculatedAt,
   }) {
+    validateDecisionCalculatorConfiguration(
+      calculationScale: calculationScale,
+      maximumIterations: maximumIterations,
+    );
     final strategyCalculator = CommonHorizonStrategyCalculator(
       roundingPolicy: roundingPolicy,
       calculationScale: calculationScale,
