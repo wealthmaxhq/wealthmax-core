@@ -11,8 +11,7 @@ import 'real_return_result.dart';
 /// Formula `INV-007`: `real = (1 + nominal) / (1 + inflation) - 1`.
 @immutable
 final class RealReturnCalculator {
-  const RealReturnCalculator({this.calculationScale = 32})
-    : assert(calculationScale > 0);
+  const RealReturnCalculator({this.calculationScale = 32});
 
   static const String formulaId = 'INV-007';
   static const String formulaVersion = '1.0.0';
@@ -23,6 +22,14 @@ final class RealReturnCalculator {
     RealReturnInput input, {
     required DateTime calculatedAt,
   }) {
+    if (calculationScale <= 0) {
+      throw ArgumentError.value(
+        calculationScale,
+        'calculationScale',
+        'Must be greater than zero.',
+      );
+    }
+
     final nominalGrowthFactor = Decimal.one + input.nominalReturn.fraction;
     final inflationGrowthFactor = Decimal.one + input.inflationRate.fraction;
     final realGrowthFactor = (nominalGrowthFactor / inflationGrowthFactor)
