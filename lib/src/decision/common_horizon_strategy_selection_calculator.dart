@@ -2,6 +2,7 @@ import 'package:meta/meta.dart';
 
 import '../calculation/calculation_result.dart';
 import '../rounding/rounding_policy.dart';
+import 'calculator_configuration.dart';
 import 'common_horizon_strategy_calculator.dart';
 import 'common_horizon_strategy_result.dart';
 import 'common_horizon_strategy_selection_input.dart';
@@ -17,8 +18,7 @@ final class CommonHorizonStrategySelectionCalculator {
     this.roundingPolicy = RoundingPolicy.halfUp,
     this.calculationScale = 32,
     this.maximumIterations = 256,
-  }) : assert(calculationScale > 0),
-       assert(maximumIterations > 0);
+  });
 
   static const String formulaId = 'OPT-010';
   static const String formulaVersion = '1.0.0';
@@ -31,6 +31,10 @@ final class CommonHorizonStrategySelectionCalculator {
     CommonHorizonStrategySelectionInput input, {
     required DateTime calculatedAt,
   }) {
+    validateDecisionCalculatorConfiguration(
+      calculationScale: calculationScale,
+      maximumIterations: maximumIterations,
+    );
     final strategyCalculation = CommonHorizonStrategyCalculator(
       roundingPolicy: roundingPolicy,
       calculationScale: calculationScale,
