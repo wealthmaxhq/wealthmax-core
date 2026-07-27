@@ -1,7 +1,11 @@
 import { Router } from 'express';
 import bcrypt from 'bcrypt';
 import { createUser, findUserByEmail } from '../lib/users';
-import { signToken, authMiddleware } from '../lib/jwt';
+import {
+  signToken,
+  authMiddleware,
+  AuthenticatedRequest,
+} from '../lib/jwt';
 
 const router = Router();
 
@@ -28,7 +32,7 @@ router.post('/login', async (req, res) => {
 });
 
 router.get('/me', authMiddleware, (req, res) => {
-  return res.json({ user: req.user });
+  return res.json({ user: (req as AuthenticatedRequest).user });
 });
 
 export default router;

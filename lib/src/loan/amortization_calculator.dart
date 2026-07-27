@@ -1,12 +1,9 @@
-import 'package:decimal/decimal.dart';
 import 'package:meta/meta.dart';
 
 import '../calculation/calculation_result.dart';
-import '../money/money.dart';
 import '../rounding/rounding_policy.dart';
-import 'amortization_entry.dart';
 import 'amortization_schedule.dart';
-import 'emi_calculator.dart';
+import 'fixed_loan_schedule_kernel.dart';
 import 'loan_input.dart';
 import 'scheduled_prepayment.dart';
 
@@ -16,7 +13,7 @@ final class AmortizationCalculator {
   const AmortizationCalculator({
     this.roundingPolicy = RoundingPolicy.halfUp,
     this.calculationScale = 32,
-  }) : assert(calculationScale > 0);
+  });
 
   static const String formulaId = 'LN-002';
   static const String formulaVersion = '1.0.0';
@@ -29,28 +26,34 @@ final class AmortizationCalculator {
     required DateTime calculatedAt,
     PrepaymentPlan? prepaymentPlan,
   }) {
+    if (calculationScale <= 0) {
+      throw ArgumentError.value(
+        calculationScale,
+        'calculationScale',
+        'Must be greater than zero.',
+      );
+    }
+
     final plan = prepaymentPlan ?? PrepaymentPlan.empty();
     plan.validateFor(
       currency: input.principal.currency,
       tenureMonths: input.tenureMonths,
     );
-    final emiResult = EmiCalculator(
+    final kernel = FixedLoanScheduleKernel(
       roundingPolicy: roundingPolicy,
       calculationScale: calculationScale,
-    ).calculate(input, calculatedAt: calculatedAt);
+    );
+    final scheduledEmi = kernel.calculateScheduledEmi(input);
     final financedPrincipal = input.financedPrincipal;
 
-    final entries = financedPrincipal.isZero
-        ? const <AmortizationEntry>[]
-        : _buildEntries(
-            input,
-            scheduledEmi: emiResult.value.emi,
-            prepaymentPlan: plan,
-          );
     final schedule = AmortizationSchedule(
-      scheduledEmi: emiResult.value.emi,
+      scheduledEmi: scheduledEmi,
       financedPrincipal: financedPrincipal,
-      entries: entries,
+      entries: kernel.buildEntries(
+        input,
+        scheduledEmi: scheduledEmi,
+        prepaymentPlan: plan,
+      ),
     );
 
     return CalculationResult<AmortizationSchedule>(
@@ -79,7 +82,7 @@ final class AmortizationCalculator {
           'roundingPolicy': roundingPolicy.name,
         },
         details: <String, Object?>{
-          'emiFormulaId': EmiCalculator.formulaId,
+          'emiFormulaId': FixedLoanScheduleKernel.emiFormulaId,
           'scheduledEmi': schedule.scheduledEmi.amount.toString(),
           'paymentCount': schedule.paymentCount,
           'totalPrincipal': schedule.totalPrincipal.amount.toString(),
@@ -90,75 +93,5 @@ final class AmortizationCalculator {
         },
       ),
     );
-  }
-
-  List<AmortizationEntry> _buildEntries(
-    LoanInput input, {
-    required Money scheduledEmi,
-    required PrepaymentPlan prepaymentPlan,
-  }) {
-    final currency = input.principal.currency;
-    final decimalPlaces = currency.decimalPlaces;
-    final monthlyRate =
-        (input.annualInterestRate.fraction / Decimal.fromInt(12)).toDecimal(
-          scaleOnInfinitePrecision: calculationScale,
-        );
-    final entries = <AmortizationEntry>[];
-    var openingBalance = input.financedPrincipal;
-
-    for (
-      var installmentNumber = 1;
-      installmentNumber <= input.tenureMonths;
-      installmentNumber++
-    ) {
-      final rawInterest = openingBalance.amount * monthlyRate;
-      final interest = Money(
-        amount: roundingPolicy.round(rawInterest, decimalPlaces: decimalPlaces),
-        currency: currency,
-      );
-      final payoffAmount = openingBalance + interest;
-      final isFinalScheduledInstallment =
-          installmentNumber == input.tenureMonths;
-      final payment =
-          isFinalScheduledInstallment ||
-              scheduledEmi.compareTo(payoffAmount) >= 0
-          ? payoffAmount
-          : scheduledEmi;
-      final principal = payment - interest;
-
-      if (!principal.isPositive) {
-        throw StateError(
-          'Rounded EMI does not cover installment interest; '
-          'the loan would negatively amortize.',
-        );
-      }
-
-      final balanceAfterScheduledPayment = openingBalance - principal;
-      final requestedPrepayment = prepaymentPlan.totalForInstallment(
-        installmentNumber,
-        currency,
-      );
-      final appliedPrepayment =
-          requestedPrepayment.compareTo(balanceAfterScheduledPayment) > 0
-          ? balanceAfterScheduledPayment
-          : requestedPrepayment;
-      final closingBalance = balanceAfterScheduledPayment - appliedPrepayment;
-      entries.add(
-        AmortizationEntry(
-          installmentNumber: installmentNumber,
-          openingBalance: openingBalance,
-          payment: payment,
-          interest: interest,
-          principal: principal,
-          prepayment: appliedPrepayment,
-          closingBalance: closingBalance,
-        ),
-      );
-      openingBalance = closingBalance;
-
-      if (openingBalance.isZero) break;
-    }
-
-    return entries;
   }
 }

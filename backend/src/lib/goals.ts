@@ -1,5 +1,5 @@
 import db from '../db';
-import { v4 as uuidv4 } from 'uuid';
+import { randomUUID } from 'node:crypto';
 
 export interface Goal {
   id: string;
@@ -45,7 +45,7 @@ export function getGoalById(id: string): Goal | undefined {
 }
 
 export function createGoal(userId: string, data: Partial<Goal>): Goal {
-  const id = uuidv4();
+  const id = randomUUID();
   const now = new Date().toISOString();
   const stmt = db.prepare('INSERT INTO goals (id, userId, title, targetAmount, currentAmount, targetDate, notes, createdAt, updatedAt) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)');
   stmt.run(id, userId, data.title || 'New Goal', data.targetAmount || 0, data.currentAmount || 0, data.targetDate || null, data.notes || null, now, now);

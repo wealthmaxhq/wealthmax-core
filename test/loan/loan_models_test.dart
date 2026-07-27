@@ -6,6 +6,17 @@ void main() {
   Money usd(String value) => Money.parse(value, currency: Currencies.usd);
 
   group('LoanInput', () {
+    test('rejects a tenure beyond the supported maximum', () {
+      expect(
+        () => LoanInput(
+          principal: inr('1000'),
+          annualInterestRate: Percentage.fromPercent('10'),
+          tenureMonths: LoanInput.maximumTenureMonths + 1,
+        ),
+        throwsArgumentError,
+      );
+    });
+
     test('stores required values', () {
       final input = LoanInput(
         principal: inr('5000000'),
