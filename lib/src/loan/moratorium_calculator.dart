@@ -16,7 +16,7 @@ final class MoratoriumCalculator {
   const MoratoriumCalculator({
     this.roundingPolicy = RoundingPolicy.halfUp,
     this.calculationScale = 32,
-  }) : assert(calculationScale > 0);
+  });
 
   static const String formulaId = 'LN-008';
   static const String formulaVersion = '1.0.0';
@@ -29,6 +29,14 @@ final class MoratoriumCalculator {
     required MoratoriumPlan plan,
     required DateTime calculatedAt,
   }) {
+    if (calculationScale <= 0) {
+      throw ArgumentError.value(
+        calculationScale,
+        'calculationScale',
+        'Must be greater than zero.',
+      );
+    }
+
     if (!input.financedPrincipal.isPositive) {
       throw ArgumentError.value(
         input.prepayment,

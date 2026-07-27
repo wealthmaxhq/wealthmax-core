@@ -13,7 +13,7 @@ final class PrepaymentCalculator {
   const PrepaymentCalculator({
     this.roundingPolicy = RoundingPolicy.halfUp,
     this.calculationScale = 32,
-  }) : assert(calculationScale > 0);
+  });
 
   static const String formulaId = 'LN-003';
   static const String formulaVersion = '1.0.0';
@@ -26,6 +26,14 @@ final class PrepaymentCalculator {
     required PrepaymentPlan prepaymentPlan,
     required DateTime calculatedAt,
   }) {
+    if (calculationScale <= 0) {
+      throw ArgumentError.value(
+        calculationScale,
+        'calculationScale',
+        'Must be greater than zero.',
+      );
+    }
+
     prepaymentPlan.validateFor(
       currency: input.principal.currency,
       tenureMonths: input.tenureMonths,
