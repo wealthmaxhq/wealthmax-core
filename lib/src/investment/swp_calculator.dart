@@ -19,8 +19,7 @@ final class SwpCalculator {
     this.roundingPolicy = RoundingPolicy.halfUp,
     this.calculationScale = 32,
     this.maximumIterations = 256,
-  }) : assert(calculationScale > 0),
-       assert(maximumIterations > 0);
+  });
 
   static const String formulaId = 'INV-004';
   static const String formulaVersion = '1.0.0';
@@ -33,6 +32,7 @@ final class SwpCalculator {
     SwpInput input, {
     required DateTime calculatedAt,
   }) {
+    _validateConfiguration();
     final currency = input.initialInvestment.currency;
     final monthlyRate = _monthlyRateFromEffectiveAnnual(
       input.expectedAnnualReturn.fraction,
@@ -165,6 +165,23 @@ final class SwpCalculator {
         },
       ),
     );
+  }
+
+  void _validateConfiguration() {
+    if (calculationScale <= 0) {
+      throw ArgumentError.value(
+        calculationScale,
+        'calculationScale',
+        'Must be greater than zero.',
+      );
+    }
+    if (maximumIterations <= 0) {
+      throw ArgumentError.value(
+        maximumIterations,
+        'maximumIterations',
+        'Must be greater than zero.',
+      );
+    }
   }
 
   Decimal _applyMonthlyGrowth(

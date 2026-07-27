@@ -20,9 +20,7 @@ final class XirrCalculator {
     this.calculationScale = 32,
     this.maximumIterations = 256,
     this.maximumBracketExpansions = 64,
-  }) : assert(calculationScale > 0),
-       assert(maximumIterations > 0),
-       assert(maximumBracketExpansions > 0);
+  });
 
   static const String formulaId = 'INV-006';
   static const String formulaVersion = '1.0.0';
@@ -36,6 +34,7 @@ final class XirrCalculator {
     XirrInput input, {
     required DateTime calculatedAt,
   }) {
+    _validateConfiguration();
     final aggregated = _aggregate(input.cashFlows);
     final startDate = aggregated.first.date;
     final endDate = aggregated.last.date;
@@ -112,6 +111,30 @@ final class XirrCalculator {
         },
       ),
     );
+  }
+
+  void _validateConfiguration() {
+    if (calculationScale <= 0) {
+      throw ArgumentError.value(
+        calculationScale,
+        'calculationScale',
+        'Must be greater than zero.',
+      );
+    }
+    if (maximumIterations <= 0) {
+      throw ArgumentError.value(
+        maximumIterations,
+        'maximumIterations',
+        'Must be greater than zero.',
+      );
+    }
+    if (maximumBracketExpansions <= 0) {
+      throw ArgumentError.value(
+        maximumBracketExpansions,
+        'maximumBracketExpansions',
+        'Must be greater than zero.',
+      );
+    }
   }
 
   List<DatedCashFlow> _aggregate(List<DatedCashFlow> cashFlows) {

@@ -17,8 +17,7 @@ final class CagrCalculator {
   const CagrCalculator({
     this.calculationScale = 32,
     this.maximumIterations = 256,
-  }) : assert(calculationScale > 0),
-       assert(maximumIterations > 0);
+  });
 
   static const String formulaId = 'INV-005';
   static const String formulaVersion = '1.0.0';
@@ -31,6 +30,7 @@ final class CagrCalculator {
     CagrInput input, {
     required DateTime calculatedAt,
   }) {
+    _validateConfiguration();
     final valueRatio = (input.finalValue.amount / input.initialValue.amount)
         .toDecimal(scaleOnInfinitePrecision: calculationScale);
     final totalReturnFraction = valueRatio - Decimal.one;
@@ -83,6 +83,23 @@ final class CagrCalculator {
         },
       ),
     );
+  }
+
+  void _validateConfiguration() {
+    if (calculationScale <= 0) {
+      throw ArgumentError.value(
+        calculationScale,
+        'calculationScale',
+        'Must be greater than zero.',
+      );
+    }
+    if (maximumIterations <= 0) {
+      throw ArgumentError.value(
+        maximumIterations,
+        'maximumIterations',
+        'Must be greater than zero.',
+      );
+    }
   }
 
   Decimal _annualize(Decimal valueRatio, int holdingPeriodDays) {
