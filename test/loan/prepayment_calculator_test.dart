@@ -148,6 +148,19 @@ void main() {
   });
 
   group('PrepaymentCalculator', () {
+    test('validates calculation scale at runtime', () {
+      const calculator = PrepaymentCalculator(calculationScale: 0);
+
+      expect(
+        () => calculator.calculate(
+          loan(),
+          prepaymentPlan: plan(const <int, String>{}),
+          calculatedAt: calculatedAt,
+        ),
+        throwsArgumentError,
+      );
+    });
+
     test('calculates positive interest savings', () {
       final result = const PrepaymentCalculator().calculate(
         loan(),

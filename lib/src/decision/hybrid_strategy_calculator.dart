@@ -7,6 +7,7 @@ import '../loan/scheduled_prepayment.dart';
 import '../money/money.dart';
 import '../percentage/percentage.dart';
 import '../rounding/rounding_policy.dart';
+import 'calculator_configuration.dart';
 import 'hybrid_strategy_input.dart';
 import 'hybrid_strategy_result.dart';
 
@@ -20,8 +21,7 @@ final class HybridStrategyCalculator {
     this.roundingPolicy = RoundingPolicy.halfUp,
     this.calculationScale = 32,
     this.maximumIterations = 256,
-  }) : assert(calculationScale > 0),
-       assert(maximumIterations > 0);
+  });
 
   static const String formulaId = 'OPT-005';
   static const String formulaVersion = '1.0.0';
@@ -34,6 +34,10 @@ final class HybridStrategyCalculator {
     HybridStrategyInput input, {
     required DateTime calculatedAt,
   }) {
+    validateDecisionCalculatorConfiguration(
+      calculationScale: calculationScale,
+      maximumIterations: maximumIterations,
+    );
     final currency = input.loan.principal.currency;
     final prepaymentCalculator = PrepaymentCalculator(
       roundingPolicy: roundingPolicy,

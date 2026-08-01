@@ -8,6 +8,7 @@ import '../percentage/percentage.dart';
 import '../rounding/rounding_policy.dart';
 import 'break_even_return_input.dart';
 import 'break_even_return_result.dart';
+import 'calculator_configuration.dart';
 
 /// Finds the gross annual investment return needed to match prepayment.
 ///
@@ -20,8 +21,7 @@ final class BreakEvenReturnCalculator {
     this.roundingPolicy = RoundingPolicy.halfUp,
     this.calculationScale = 32,
     this.maximumIterations = 256,
-  }) : assert(calculationScale > 0),
-       assert(maximumIterations > 0);
+  });
 
   static const String formulaId = 'OPT-002';
   static const String formulaVersion = '1.0.0';
@@ -34,6 +34,10 @@ final class BreakEvenReturnCalculator {
     BreakEvenReturnInput input, {
     required DateTime calculatedAt,
   }) {
+    validateDecisionCalculatorConfiguration(
+      calculationScale: calculationScale,
+      maximumIterations: maximumIterations,
+    );
     final prepayment =
         PrepaymentCalculator(
               roundingPolicy: roundingPolicy,

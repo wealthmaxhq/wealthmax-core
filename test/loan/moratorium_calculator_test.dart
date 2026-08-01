@@ -35,6 +35,19 @@ void main() {
   }
 
   group('MoratoriumCalculator', () {
+    test('validates calculation scale at runtime', () {
+      const calculator = MoratoriumCalculator(calculationScale: 0);
+
+      expect(
+        () => calculator.calculate(
+          loan(),
+          plan: plan(),
+          calculatedAt: calculatedAt,
+        ),
+        throwsArgumentError,
+      );
+    });
+
     test('full moratorium capitalizes interest monthly', () {
       final result = const MoratoriumCalculator().calculate(
         loan(),

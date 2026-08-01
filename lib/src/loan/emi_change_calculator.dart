@@ -20,8 +20,7 @@ final class EmiChangeCalculator {
     this.roundingPolicy = RoundingPolicy.halfUp,
     this.calculationScale = 32,
     this.maxInstallments = 1200,
-  }) : assert(calculationScale > 0),
-       assert(maxInstallments > 0);
+  });
 
   static const String formulaId = 'LN-005';
   static const String formulaVersion = '1.0.0';
@@ -38,6 +37,20 @@ final class EmiChangeCalculator {
     required DateTime calculatedAt,
     PrepaymentPlan? prepaymentPlan,
   }) {
+    if (calculationScale <= 0) {
+      throw ArgumentError.value(
+        calculationScale,
+        'calculationScale',
+        'Must be greater than zero.',
+      );
+    }
+    if (maxInstallments <= 0) {
+      throw ArgumentError.value(
+        maxInstallments,
+        'maxInstallments',
+        'Must be greater than zero.',
+      );
+    }
     if (maxInstallments < input.tenureMonths) {
       throw ArgumentError.value(
         maxInstallments,

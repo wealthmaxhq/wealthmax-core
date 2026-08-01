@@ -37,11 +37,11 @@ void main() {
       );
       expect(
         result.value.totalPayment,
-        Money.parse('2316052.80', currency: Currencies.inr),
+        Money.parse('2316050', currency: Currencies.inr),
       );
       expect(
         result.value.totalInterest,
-        Money.parse('1316052.80', currency: Currencies.inr),
+        Money.parse('1316050', currency: Currencies.inr),
       );
     });
 
@@ -254,6 +254,40 @@ void main() {
 
       expect(first, second);
       expect(first.hashCode, second.hashCode);
+    });
+
+    test('reconciles totals with the rounded amortization schedule', () {
+      final input = loan(principal: '1000000', rate: '10', months: 240);
+
+      final summary = const EmiCalculator().calculate(
+        input,
+        calculatedAt: calculatedAt,
+      );
+      final schedule = const AmortizationCalculator().calculate(
+        input,
+        calculatedAt: calculatedAt,
+      );
+
+      expect(summary.value.emi, schedule.value.scheduledEmi);
+      expect(summary.value.totalInterest, schedule.value.totalInterest);
+      expect(summary.value.totalPayment, schedule.value.totalPayment);
+      expect(
+        summary.metadata.details['paymentCount'],
+        schedule.value.paymentCount,
+      );
+      expect(summary.metadata.details['finalPaymentAdjustment'], isTrue);
+    });
+
+    test('validates calculation scale at runtime', () {
+      const calculator = EmiCalculator(calculationScale: 0);
+
+      expect(
+        () => calculator.calculate(
+          loan(principal: '1000', rate: '10', months: 12),
+          calculatedAt: calculatedAt,
+        ),
+        throwsArgumentError,
+      );
     });
   });
 }

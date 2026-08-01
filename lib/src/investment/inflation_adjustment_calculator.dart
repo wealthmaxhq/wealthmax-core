@@ -17,8 +17,7 @@ final class InflationAdjustmentCalculator {
     this.roundingPolicy = RoundingPolicy.halfUp,
     this.calculationScale = 32,
     this.maximumIterations = 256,
-  }) : assert(calculationScale > 0),
-       assert(maximumIterations > 0);
+  });
 
   static const String formulaId = 'INV-008';
   static const String formulaVersion = '1.0.0';
@@ -31,6 +30,7 @@ final class InflationAdjustmentCalculator {
     InflationAdjustmentInput input, {
     required DateTime calculatedAt,
   }) {
+    _validateConfiguration();
     final currency = input.nominalFutureValue.currency;
     final annualGrowthFactor = Decimal.one + input.annualInflationRate.fraction;
     final monthlyGrowthFactor = input.horizonMonths == 0
@@ -116,6 +116,23 @@ final class InflationAdjustmentCalculator {
         },
       ),
     );
+  }
+
+  void _validateConfiguration() {
+    if (calculationScale <= 0) {
+      throw ArgumentError.value(
+        calculationScale,
+        'calculationScale',
+        'Must be greater than zero.',
+      );
+    }
+    if (maximumIterations <= 0) {
+      throw ArgumentError.value(
+        maximumIterations,
+        'maximumIterations',
+        'Must be greater than zero.',
+      );
+    }
   }
 
   Decimal _monthlyFactor(Decimal annualGrowthFactor) {

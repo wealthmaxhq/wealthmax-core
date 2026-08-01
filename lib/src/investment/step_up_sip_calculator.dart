@@ -20,8 +20,7 @@ final class StepUpSipCalculator {
     this.roundingPolicy = RoundingPolicy.halfUp,
     this.calculationScale = 32,
     this.maximumIterations = 256,
-  }) : assert(calculationScale > 0),
-       assert(maximumIterations > 0);
+  });
 
   static const String formulaId = 'INV-003';
   static const String formulaVersion = '1.0.0';
@@ -34,6 +33,7 @@ final class StepUpSipCalculator {
     StepUpSipInput input, {
     required DateTime calculatedAt,
   }) {
+    _validateConfiguration();
     final currency = input.initialMonthlyContribution.currency;
     final monthlyRate = _monthlyRateFromEffectiveAnnual(
       input.expectedAnnualReturn.fraction,
@@ -154,6 +154,23 @@ final class StepUpSipCalculator {
         },
       ),
     );
+  }
+
+  void _validateConfiguration() {
+    if (calculationScale <= 0) {
+      throw ArgumentError.value(
+        calculationScale,
+        'calculationScale',
+        'Must be greater than zero.',
+      );
+    }
+    if (maximumIterations <= 0) {
+      throw ArgumentError.value(
+        maximumIterations,
+        'maximumIterations',
+        'Must be greater than zero.',
+      );
+    }
   }
 
   Decimal _monthlyRateFromEffectiveAnnual(Decimal annualRate) {

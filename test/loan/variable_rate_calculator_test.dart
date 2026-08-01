@@ -42,6 +42,19 @@ void main() {
   }
 
   group('VariableRateCalculator', () {
+    test('validates calculation scale at runtime', () {
+      const calculator = VariableRateCalculator(calculationScale: 0);
+
+      expect(
+        () => calculator.calculate(
+          loan(),
+          interestRatePlan: rates(const <int, String>{}),
+          calculatedAt: calculatedAt,
+        ),
+        throwsArgumentError,
+      );
+    });
+
     test('empty rate plan matches the fixed-rate schedule', () {
       final input = loan(months: 24);
       final fixed = const AmortizationCalculator()

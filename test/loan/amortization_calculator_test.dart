@@ -21,6 +21,18 @@ void main() {
   }
 
   group('AmortizationCalculator', () {
+    test('validates calculation scale at runtime', () {
+      const calculator = AmortizationCalculator(calculationScale: 0);
+
+      expect(
+        () => calculator.calculate(
+          loan(principal: '1000', rate: '10', months: 12),
+          calculatedAt: calculatedAt,
+        ),
+        throwsArgumentError,
+      );
+    });
+
     test('builds a fully reconciled standard schedule', () {
       final result = const AmortizationCalculator().calculate(
         loan(principal: '100000', rate: '12', months: 12),

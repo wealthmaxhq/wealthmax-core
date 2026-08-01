@@ -1,9 +1,9 @@
-import 'package:decimal/decimal.dart';
 import 'package:meta/meta.dart';
 
 import '../calculation/calculation_result.dart';
-import '../money/money.dart';
 import '../rounding/rounding_policy.dart';
+import 'amortization_schedule.dart';
+import 'fixed_loan_schedule_kernel.dart';
 import 'loan_input.dart';
 import 'loan_result.dart';
 
@@ -20,9 +20,9 @@ final class EmiCalculator {
   const EmiCalculator({
     this.roundingPolicy = RoundingPolicy.halfUp,
     this.calculationScale = 32,
-  }) : assert(calculationScale > 0);
+  });
 
-  static const String formulaId = 'LN-001';
+  static const String formulaId = FixedLoanScheduleKernel.emiFormulaId;
   static const String formulaVersion = '1.0.0';
 
   /// Rounding applied to currency outputs.
@@ -39,25 +39,30 @@ final class EmiCalculator {
     LoanInput input, {
     required DateTime calculatedAt,
   }) {
+    if (calculationScale <= 0) {
+      throw ArgumentError.value(
+        calculationScale,
+        'calculationScale',
+        'Must be greater than zero.',
+      );
+    }
+
     final financedPrincipal = input.financedPrincipal;
     final decimalPlaces = financedPrincipal.currency.decimalPlaces;
-    final rawEmi = _calculateRawEmi(input);
-    final roundedEmi = roundingPolicy.round(
-      rawEmi,
-      decimalPlaces: decimalPlaces,
+    final kernel = FixedLoanScheduleKernel(
+      roundingPolicy: roundingPolicy,
+      calculationScale: calculationScale,
     );
-    final emi = Money(amount: roundedEmi, currency: financedPrincipal.currency);
-    final isZeroInterest = input.annualInterestRate.isZero;
-    final totalPayment = isZeroInterest
-        ? financedPrincipal
-        : emi.multiply(Decimal.fromInt(input.tenureMonths));
-    final totalInterest = isZeroInterest
-        ? Money.zero(financedPrincipal.currency)
-        : totalPayment - financedPrincipal;
+    final emi = kernel.calculateScheduledEmi(input);
+    final schedule = AmortizationSchedule(
+      scheduledEmi: emi,
+      financedPrincipal: financedPrincipal,
+      entries: kernel.buildEntries(input, scheduledEmi: emi),
+    );
     final result = LoanResult(
       emi: emi,
-      totalInterest: totalInterest,
-      totalPayment: totalPayment,
+      totalInterest: schedule.totalInterest,
+      totalPayment: schedule.totalPayment,
     );
 
     return CalculationResult<LoanResult>(
@@ -86,59 +91,10 @@ final class EmiCalculator {
           'financedPrincipal': financedPrincipal.amount.toString(),
           'calculationScale': calculationScale,
           'currencyDecimalPlaces': decimalPlaces,
+          'paymentCount': schedule.paymentCount,
+          'finalPaymentAdjustment': true,
         },
       ),
-    );
-  }
-
-  Decimal _calculateRawEmi(LoanInput input) {
-    final principal = input.financedPrincipal.amount;
-    if (principal == Decimal.zero) return Decimal.zero;
-
-    final periods = Decimal.fromInt(input.tenureMonths);
-    if (input.annualInterestRate.isZero) {
-      return (principal / periods).toDecimal(
-        scaleOnInfinitePrecision: calculationScale,
-      );
-    }
-
-    final monthlyRate =
-        (input.annualInterestRate.fraction / Decimal.fromInt(12)).toDecimal(
-          scaleOnInfinitePrecision: calculationScale,
-        );
-    final growthFactor = Decimal.one + monthlyRate;
-    final compounded = _powAtScale(growthFactor, input.tenureMonths);
-    final numerator = principal * monthlyRate * compounded;
-    final denominator = compounded - Decimal.one;
-
-    return (numerator / denominator).toDecimal(
-      scaleOnInfinitePrecision: calculationScale,
-    );
-  }
-
-  Decimal _powAtScale(Decimal base, int exponent) {
-    var result = Decimal.one;
-    var factor = base;
-    var remainingExponent = exponent;
-
-    while (remainingExponent > 0) {
-      if (remainingExponent.isOdd) {
-        result = _roundIntermediate(result * factor);
-      }
-
-      remainingExponent ~/= 2;
-      if (remainingExponent > 0) {
-        factor = _roundIntermediate(factor * factor);
-      }
-    }
-
-    return result;
-  }
-
-  Decimal _roundIntermediate(Decimal value) {
-    return RoundingPolicy.halfEven.round(
-      value,
-      decimalPlaces: calculationScale,
     );
   }
 }

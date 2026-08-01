@@ -4,6 +4,7 @@ import '../calculation/calculation_result.dart';
 import '../rounding/rounding_policy.dart';
 import 'break_even_return_calculator.dart';
 import 'break_even_return_input.dart';
+import 'calculator_configuration.dart';
 import 'opportunity_cost_calculator.dart';
 import 'opportunity_cost_input.dart';
 import 'return_sensitivity_input.dart';
@@ -16,8 +17,7 @@ final class ReturnSensitivityCalculator {
     this.roundingPolicy = RoundingPolicy.halfUp,
     this.calculationScale = 32,
     this.maximumIterations = 256,
-  }) : assert(calculationScale > 0),
-       assert(maximumIterations > 0);
+  });
 
   static const String formulaId = 'OPT-003';
   static const String formulaVersion = '1.0.0';
@@ -30,6 +30,10 @@ final class ReturnSensitivityCalculator {
     ReturnSensitivityInput input, {
     required DateTime calculatedAt,
   }) {
+    validateDecisionCalculatorConfiguration(
+      calculationScale: calculationScale,
+      maximumIterations: maximumIterations,
+    );
     final breakEven =
         BreakEvenReturnCalculator(
               roundingPolicy: roundingPolicy,

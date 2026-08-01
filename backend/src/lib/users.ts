@@ -1,5 +1,5 @@
 import db from '../db';
-import { v4 as uuidv4 } from 'uuid';
+import { randomUUID } from 'node:crypto';
 
 export interface User {
   id: string;
@@ -22,7 +22,7 @@ export function findUserById(id: string): User | undefined {
 }
 
 export function createUser(email: string, passwordHash: string, name?: string): User {
-  const id = uuidv4();
+  const id = randomUUID();
   const now = new Date().toISOString();
   const stmt = db.prepare('INSERT INTO users (id, email, passwordHash, name, createdAt) VALUES (?, ?, ?, ?, ?)');
   stmt.run(id, email, passwordHash, name, now);

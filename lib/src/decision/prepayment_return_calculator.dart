@@ -8,6 +8,7 @@ import '../loan/scheduled_prepayment.dart';
 import '../money/money.dart';
 import '../percentage/percentage.dart';
 import '../rounding/rounding_policy.dart';
+import 'calculator_configuration.dart';
 import 'prepayment_return_input.dart';
 import 'prepayment_return_result.dart';
 
@@ -21,8 +22,7 @@ final class PrepaymentReturnCalculator {
     this.roundingPolicy = RoundingPolicy.halfUp,
     this.calculationScale = 32,
     this.maximumIterations = 256,
-  }) : assert(calculationScale > 0),
-       assert(maximumIterations > 0);
+  });
 
   static const String formulaId = 'OPT-004';
   static const String formulaVersion = '1.0.0';
@@ -35,6 +35,10 @@ final class PrepaymentReturnCalculator {
     PrepaymentReturnInput input, {
     required DateTime calculatedAt,
   }) {
+    validateDecisionCalculatorConfiguration(
+      calculationScale: calculationScale,
+      maximumIterations: maximumIterations,
+    );
     final prepayment =
         PrepaymentCalculator(
               roundingPolicy: roundingPolicy,

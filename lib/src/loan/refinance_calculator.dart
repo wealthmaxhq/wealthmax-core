@@ -13,7 +13,7 @@ final class RefinanceCalculator {
   const RefinanceCalculator({
     this.roundingPolicy = RoundingPolicy.halfUp,
     this.calculationScale = 32,
-  }) : assert(calculationScale > 0);
+  });
 
   static const String formulaId = 'LN-006';
   static const String formulaVersion = '1.0.0';
@@ -25,6 +25,14 @@ final class RefinanceCalculator {
     RefinanceInput input, {
     required DateTime calculatedAt,
   }) {
+    if (calculationScale <= 0) {
+      throw ArgumentError.value(
+        calculationScale,
+        'calculationScale',
+        'Must be greater than zero.',
+      );
+    }
+
     final calculator = AmortizationCalculator(
       roundingPolicy: roundingPolicy,
       calculationScale: calculationScale,
