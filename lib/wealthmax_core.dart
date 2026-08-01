@@ -2,6 +2,9 @@ library;
 
 export 'src/calculation/calculation_result.dart';
 export 'src/currency/currency.dart';
+export 'src/decision/adjusted_decision_analysis_calculator.dart';
+export 'src/decision/adjusted_decision_analysis_input.dart';
+export 'src/decision/adjusted_decision_analysis_result.dart';
 export 'src/decision/break_even_return_calculator.dart';
 export 'src/decision/break_even_return_input.dart';
 export 'src/decision/break_even_return_result.dart';
