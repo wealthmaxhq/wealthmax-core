@@ -101,3 +101,5 @@ export 'src/reporting/decision_analysis_report_snapshot_calculator.dart';
 export 'src/reporting/weighted_decision_analysis_calculator.dart';
 export 'src/reporting/weighted_decision_analysis_input.dart';
 export 'src/reporting/weighted_decision_analysis_result.dart';
+export 'src/reporting/weighted_decision_analysis_snapshot.dart';
+export 'src/reporting/weighted_decision_analysis_snapshot_calculator.dart';
