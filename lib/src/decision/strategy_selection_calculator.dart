@@ -2,6 +2,7 @@ import 'package:meta/meta.dart';
 
 import '../calculation/calculation_result.dart';
 import '../rounding/rounding_policy.dart';
+import 'calculator_configuration.dart';
 import 'hybrid_strategy_calculator.dart';
 import 'hybrid_strategy_result.dart';
 import 'strategy_selection_input.dart';
@@ -17,8 +18,7 @@ final class StrategySelectionCalculator {
     this.roundingPolicy = RoundingPolicy.halfUp,
     this.calculationScale = 32,
     this.maximumIterations = 256,
-  }) : assert(calculationScale > 0),
-       assert(maximumIterations > 0);
+  });
 
   static const String formulaId = 'OPT-006';
   static const String formulaVersion = '1.0.0';
@@ -31,6 +31,10 @@ final class StrategySelectionCalculator {
     StrategySelectionInput input, {
     required DateTime calculatedAt,
   }) {
+    validateDecisionCalculatorConfiguration(
+      calculationScale: calculationScale,
+      maximumIterations: maximumIterations,
+    );
     final hybridCalculation = HybridStrategyCalculator(
       roundingPolicy: roundingPolicy,
       calculationScale: calculationScale,

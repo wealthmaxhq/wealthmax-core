@@ -26,6 +26,15 @@ void main() {
   }
 
   group('RefinanceCalculator', () {
+    test('validates calculation scale at runtime', () {
+      const calculator = RefinanceCalculator(calculationScale: 0);
+
+      expect(
+        () => calculator.calculate(input(), calculatedAt: calculatedAt),
+        throwsArgumentError,
+      );
+    });
+
     test('lower rate with same tenure lowers EMI and total cost', () {
       final result = const RefinanceCalculator().calculate(
         input(),

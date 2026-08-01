@@ -44,6 +44,32 @@ void main() {
   }
 
   group('EmiChangeCalculator', () {
+    test('validates calculation scale at runtime', () {
+      const calculator = EmiChangeCalculator(calculationScale: 0);
+
+      expect(
+        () => calculator.calculate(
+          loan(),
+          emiChangePlan: changes(const <int, String>{}),
+          calculatedAt: calculatedAt,
+        ),
+        throwsArgumentError,
+      );
+    });
+
+    test('validates maximum installments at runtime', () {
+      const calculator = EmiChangeCalculator(maxInstallments: 0);
+
+      expect(
+        () => calculator.calculate(
+          loan(),
+          emiChangePlan: changes(const <int, String>{}),
+          calculatedAt: calculatedAt,
+        ),
+        throwsArgumentError,
+      );
+    });
+
     test('empty plan matches baseline exactly', () {
       final result = const EmiChangeCalculator().calculate(
         loan(),

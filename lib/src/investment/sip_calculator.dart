@@ -19,8 +19,7 @@ final class SipCalculator {
     this.roundingPolicy = RoundingPolicy.halfUp,
     this.calculationScale = 32,
     this.maximumIterations = 256,
-  }) : assert(calculationScale > 0),
-       assert(maximumIterations > 0);
+  });
 
   static const String formulaId = 'INV-002';
   static const String formulaVersion = '1.0.0';
@@ -33,6 +32,7 @@ final class SipCalculator {
     SipInput input, {
     required DateTime calculatedAt,
   }) {
+    _validateConfiguration();
     final currency = input.monthlyContribution.currency;
     final monthlyRate = _monthlyRateFromEffectiveAnnual(
       input.expectedAnnualReturn.fraction,
@@ -126,6 +126,23 @@ final class SipCalculator {
         },
       ),
     );
+  }
+
+  void _validateConfiguration() {
+    if (calculationScale <= 0) {
+      throw ArgumentError.value(
+        calculationScale,
+        'calculationScale',
+        'Must be greater than zero.',
+      );
+    }
+    if (maximumIterations <= 0) {
+      throw ArgumentError.value(
+        maximumIterations,
+        'maximumIterations',
+        'Must be greater than zero.',
+      );
+    }
   }
 
   Decimal _monthlyRateFromEffectiveAnnual(Decimal annualRate) {

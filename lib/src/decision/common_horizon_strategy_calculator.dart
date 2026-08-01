@@ -4,7 +4,10 @@ import 'package:meta/meta.dart';
 import '../calculation/calculation_result.dart';
 import '../loan/amortization_schedule.dart';
 import '../money/money.dart';
+import '../percentage/percentage.dart';
 import '../rounding/rounding_policy.dart';
+import 'calculator_configuration.dart';
+import 'common_horizon_strategy_preparation.dart';
 import 'common_horizon_strategy_result.dart';
 import 'hybrid_strategy_calculator.dart';
 import 'hybrid_strategy_input.dart';
@@ -20,8 +23,7 @@ final class CommonHorizonStrategyCalculator {
     this.roundingPolicy = RoundingPolicy.halfUp,
     this.calculationScale = 32,
     this.maximumIterations = 256,
-  }) : assert(calculationScale > 0),
-       assert(maximumIterations > 0);
+  });
 
   static const String formulaId = 'OPT-007';
   static const String formulaVersion = '1.0.0';
@@ -30,10 +32,91 @@ final class CommonHorizonStrategyCalculator {
   final int calculationScale;
   final int maximumIterations;
 
+  /// Prepares loan-dependent scenarios once for repeated return evaluation.
+  CommonHorizonStrategyPreparation prepare(
+    HybridStrategyInput input, {
+    required DateTime calculatedAt,
+  }) {
+    return CommonHorizonStrategyPreparation(
+      sourceInput: input,
+      template: calculate(input, calculatedAt: calculatedAt).value,
+    );
+  }
+
+  /// Revalues a prepared allocation grid without rebuilding loan schedules.
+  CommonHorizonStrategyResult revaluePrepared(
+    CommonHorizonStrategyPreparation preparation, {
+    required Percentage grossAnnualInvestmentReturn,
+    required Percentage annualExpenseRatio,
+  }) {
+    final input = preparation.sourceInput.copyWith(
+      grossAnnualInvestmentReturn: grossAnnualInvestmentReturn,
+      annualExpenseRatio: annualExpenseRatio,
+    );
+    final commonHorizon = preparation.template.commonHorizonInstallment;
+    final horizonMonths = commonHorizon - input.decisionInstallment;
+    final netAnnualFactor =
+        (Decimal.one + grossAnnualInvestmentReturn.fraction) *
+        (Decimal.one - annualExpenseRatio.fraction);
+    final netAnnualReturn = Percentage.fromFraction(
+      (netAnnualFactor - Decimal.one).toString(),
+    );
+    final monthlyFactor = horizonMonths == 0
+        ? Decimal.one
+        : _monthlyFactor(netAnnualFactor);
+    final cumulativeFactor = _powExact(monthlyFactor, horizonMonths);
+    final currency = input.extraCash.currency;
+
+    final allocations = preparation.template.scenarios
+        .map((scenario) {
+          final allocation = scenario.allocation;
+          final investmentFutureValue = Money(
+            amount: roundingPolicy.round(
+              allocation.investedAmount.amount * cumulativeFactor,
+              decimalPlaces: currency.decimalPlaces,
+            ),
+            currency: currency,
+          );
+          return HybridStrategyScenario(
+            requestedPrepaymentAllocation:
+                allocation.requestedPrepaymentAllocation,
+            availableCash: allocation.availableCash,
+            requestedPrepayment: allocation.requestedPrepayment,
+            loanPrepayment: allocation.loanPrepayment,
+            investedAmount: allocation.investedAmount,
+            investmentFutureValue: investmentFutureValue,
+            investmentHorizonMonths: horizonMonths,
+          );
+        })
+        .toList(growable: false);
+    final hybrid = HybridStrategyResult(
+      scenarios: allocations,
+      netAnnualInvestmentReturn: netAnnualReturn,
+    );
+    return CommonHorizonStrategyResult(
+      scenarios: hybrid.scenarios
+          .map(
+            (allocation) => _normalizeScenario(
+              allocation,
+              decisionInstallment: input.decisionInstallment,
+              commonHorizon: commonHorizon,
+              monthlyFactor: monthlyFactor,
+            ),
+          )
+          .toList(growable: false),
+      netAnnualInvestmentReturn: netAnnualReturn,
+      commonHorizonInstallment: commonHorizon,
+    );
+  }
+
   CalculationResult<CommonHorizonStrategyResult> calculate(
     HybridStrategyInput input, {
     required DateTime calculatedAt,
   }) {
+    validateDecisionCalculatorConfiguration(
+      calculationScale: calculationScale,
+      maximumIterations: maximumIterations,
+    );
     final hybridCalculation = HybridStrategyCalculator(
       roundingPolicy: roundingPolicy,
       calculationScale: calculationScale,

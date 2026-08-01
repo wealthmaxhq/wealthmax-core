@@ -9,6 +9,9 @@ import '../percentage/percentage.dart';
 /// fails immediately when an input cannot describe a valid loan.
 @immutable
 final class LoanInput {
+  /// Maximum supported loan term: 100 years of monthly installments.
+  static const int maximumTenureMonths = 1200;
+
   factory LoanInput({
     required Money principal,
     required Percentage annualInterestRate,
@@ -35,6 +38,13 @@ final class LoanInput {
         tenureMonths,
         'tenureMonths',
         'Tenure must be greater than zero months.',
+      );
+    }
+    if (tenureMonths > maximumTenureMonths) {
+      throw ArgumentError.value(
+        tenureMonths,
+        'tenureMonths',
+        'Tenure must not exceed $maximumTenureMonths months.',
       );
     }
 

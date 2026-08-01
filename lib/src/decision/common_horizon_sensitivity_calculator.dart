@@ -4,6 +4,7 @@ import 'package:meta/meta.dart';
 import '../calculation/calculation_result.dart';
 import '../rounding/rounding_policy.dart';
 import 'break_even_return_input.dart';
+import 'calculator_configuration.dart';
 import 'common_horizon_break_even_calculator.dart';
 import 'common_horizon_sensitivity_result.dart';
 import 'common_horizon_strategy_calculator.dart';
@@ -20,8 +21,7 @@ final class CommonHorizonSensitivityCalculator {
     this.roundingPolicy = RoundingPolicy.halfUp,
     this.calculationScale = 32,
     this.maximumIterations = 256,
-  }) : assert(calculationScale > 0),
-       assert(maximumIterations > 0);
+  });
 
   static const String formulaId = 'OPT-009';
   static const String formulaVersion = '1.0.0';
@@ -34,6 +34,10 @@ final class CommonHorizonSensitivityCalculator {
     ReturnSensitivityInput input, {
     required DateTime calculatedAt,
   }) {
+    validateDecisionCalculatorConfiguration(
+      calculationScale: calculationScale,
+      maximumIterations: maximumIterations,
+    );
     final breakEven =
         CommonHorizonBreakEvenCalculator(
               roundingPolicy: roundingPolicy,
@@ -55,26 +59,33 @@ final class CommonHorizonSensitivityCalculator {
       calculationScale: calculationScale,
       maximumIterations: maximumIterations,
     );
-    final points = input.grossAnnualReturnScenarios
-        .map(
-          (scenario) => CommonHorizonSensitivityPoint(
-            grossAnnualReturn: scenario,
-            comparison: comparisonCalculator
-                .calculate(
-                  HybridStrategyInput(
-                    loan: input.loan,
-                    extraCash: input.extraCash,
-                    decisionInstallment: input.decisionInstallment,
-                    grossAnnualInvestmentReturn: scenario,
-                    annualExpenseRatio: input.annualExpenseRatio,
-                    allocationStepPercent: 100,
-                  ),
-                  calculatedAt: calculatedAt,
-                )
-                .value,
+    final firstReturn = input.grossAnnualReturnScenarios.first;
+    final preparation = comparisonCalculator.prepare(
+      HybridStrategyInput(
+        loan: input.loan,
+        extraCash: input.extraCash,
+        decisionInstallment: input.decisionInstallment,
+        grossAnnualInvestmentReturn: firstReturn,
+        annualExpenseRatio: input.annualExpenseRatio,
+        allocationStepPercent: 100,
+      ),
+      calculatedAt: calculatedAt,
+    );
+    final points = <CommonHorizonSensitivityPoint>[
+      CommonHorizonSensitivityPoint(
+        grossAnnualReturn: firstReturn,
+        comparison: preparation.template,
+      ),
+      for (final scenario in input.grossAnnualReturnScenarios.skip(1))
+        CommonHorizonSensitivityPoint(
+          grossAnnualReturn: scenario,
+          comparison: comparisonCalculator.revaluePrepared(
+            preparation,
+            grossAnnualInvestmentReturn: scenario,
+            annualExpenseRatio: input.annualExpenseRatio,
           ),
-        )
-        .toList(growable: false);
+        ),
+    ];
     final result = CommonHorizonSensitivityResult(
       breakEven: breakEven,
       annualExpenseRatio: input.annualExpenseRatio,
@@ -153,6 +164,8 @@ final class CommonHorizonSensitivityCalculator {
           'comparisonHorizon': 'baselineLoanPayoffInstallment',
           'cashFlowTimingNormalized': true,
           'savedPaymentTreatment': 'fullyReinvestedToCommonHorizon',
+          'loanScenarioPreparationReused': true,
+          'loanScenarioPreparationScope': 'sensitivityReturnGrid',
           'breakEvenFormulaId': CommonHorizonBreakEvenCalculator.formulaId,
           'comparisonFormulaId': CommonHorizonStrategyCalculator.formulaId,
           'feeConvention': 'endOfYearAssetBasedFee',
@@ -165,6 +178,9 @@ final class CommonHorizonSensitivityCalculator {
         },
         details: <String, Object?>{
           'scenarioCount': points.length,
+          'loanScenarioPreparationCount': 1,
+          'strategyRevaluationCount': points.length - 1,
+          'avoidedLoanScenarioRebuildCount': points.length - 1,
           'commonHorizonInstallment':
               breakEven.comparison.commonHorizonInstallment,
           'breakEvenGrossAnnualReturnPercent': breakEven

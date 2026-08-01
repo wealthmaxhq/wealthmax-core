@@ -29,6 +29,24 @@ void main() {
   }
 
   group('EffectiveRateCalculator', () {
+    test('validates calculation scale at runtime', () {
+      const calculator = EffectiveRateCalculator(calculationScale: 0);
+
+      expect(
+        () => calculator.calculate(loan(), calculatedAt: calculatedAt),
+        throwsArgumentError,
+      );
+    });
+
+    test('validates maximum iterations at runtime', () {
+      const calculator = EffectiveRateCalculator(maximumIterations: 0);
+
+      expect(
+        () => calculator.calculate(loan(), calculatedAt: calculatedAt),
+        throwsArgumentError,
+      );
+    });
+
     test('recovers the nominal rate when no processing fee is charged', () {
       final result = const EffectiveRateCalculator().calculate(
         loan(),
