@@ -96,3 +96,5 @@ export 'src/rounding/rounding_policy.dart';
 export 'src/reporting/decision_analysis_report_calculator.dart';
 export 'src/reporting/decision_analysis_report_input.dart';
 export 'src/reporting/decision_analysis_report_result.dart';
+export 'src/reporting/decision_analysis_report_snapshot.dart';
+export 'src/reporting/decision_analysis_report_snapshot_calculator.dart';
