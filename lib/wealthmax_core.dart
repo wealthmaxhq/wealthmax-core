@@ -93,3 +93,6 @@ export 'src/loan/variable_rate_period.dart';
 export 'src/money/money.dart';
 export 'src/percentage/percentage.dart';
 export 'src/rounding/rounding_policy.dart';
+export 'src/reporting/decision_analysis_report_calculator.dart';
+export 'src/reporting/decision_analysis_report_input.dart';
+export 'src/reporting/decision_analysis_report_result.dart';
