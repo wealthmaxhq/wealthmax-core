@@ -28,6 +28,7 @@ export interface DecisionReportSnapshot {
   cases: Array<{
     id: string;
     label: string;
+    objective: string;
     selectedPrepaymentAllocationPercent: string;
     afterTaxFutureValue: string;
     realAfterTaxFutureValue: string;

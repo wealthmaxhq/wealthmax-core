@@ -142,6 +142,7 @@ describe('Decision reports E2E', () => {
   test('calculates downside, base, and upside cases in one report', async () => {
     const multiScenario = structuredClone(report);
     const baseCase = multiScenario.cases[0];
+    baseCase.objective = 'fastestDebtFree';
     const scenarios = [
       { id: 'downside', label: 'Downside case', value: '8' },
       { id: 'base', label: 'Base case', value: '12' },
@@ -163,6 +164,11 @@ describe('Decision reports E2E', () => {
     expect(response.status).toBe(201);
     expect(response.body.report.cases.map((item: { id: string }) => item.id)).toEqual(
       ['downside', 'base', 'upside'],
+    );
+    expect(response.body.report.cases).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ objective: 'fastestDebtFree' }),
+      ]),
     );
     expect(response.body.report.summary.selectedRealValueRange).toEqual(
       expect.any(String),

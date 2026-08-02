@@ -23,6 +23,7 @@ type FormState = {
   expenseRatio: string;
   taxRate: string;
   inflationRate: string;
+  objective: string;
 };
 
 const initialForm: FormState = {
@@ -38,6 +39,21 @@ const initialForm: FormState = {
   expenseRatio: '1',
   taxRate: '20',
   inflationRate: '6',
+  objective: 'maximumFutureValue',
+};
+
+const objectiveLabels: Record<string, string> = {
+  maximumFutureValue: 'Build the most future wealth',
+  minimumInterestCost: 'Pay the least loan interest',
+  fastestDebtFree: 'Become debt-free fastest',
+  maximumInvestedCapital: 'Keep the most money invested',
+};
+
+const objectiveHelp: Record<string, string> = {
+  maximumFutureValue: 'Selects the allocation with the highest value at the shared comparison horizon.',
+  minimumInterestCost: 'Prioritizes reducing total loan interest, even when another path may build more wealth.',
+  fastestDebtFree: 'Prioritizes the earliest loan payoff date.',
+  maximumInvestedCapital: 'Prioritizes market exposure and liquidity over debt reduction.',
 };
 
 function errorMessage(error: unknown): string {
@@ -70,7 +86,7 @@ function reportPayload(form: FormState) {
         grossAnnualInvestmentReturnPercent: scenario.value,
         annualExpenseRatioPercent: form.expenseRatio.trim(),
         allocationStepPercent: 10,
-        objective: 'maximumFutureValue',
+        objective: form.objective,
         grossAnnualReturnScenariosPercent: returnScenarios,
         investmentGainTaxRatePercent: form.taxRate.trim(),
         annualInflationRatePercent: form.inflationRate.trim(),
@@ -249,6 +265,18 @@ export default function DecisionReports() {
                 onChange={(event) => update('title', event.target.value)}
               />
             </label>
+            <label className="full-field">
+              What matters most?
+              <select
+                value={form.objective}
+                onChange={(event) => update('objective', event.target.value)}
+              >
+                {Object.entries(objectiveLabels).map(([value, label]) => (
+                  <option key={value} value={value}>{label}</option>
+                ))}
+              </select>
+              <span className="field-help">{objectiveHelp[form.objective]}</span>
+            </label>
             <label>
               Currency
               <select
@@ -395,6 +423,9 @@ export default function DecisionReports() {
               <p className="print-metadata">
                 Generated {new Date(selected.createdAt).toLocaleString()} ·{' '}
                 {selected.sourceFormulaId} · Schema {selected.schemaVersion}
+              </p>
+              <p className="objective-summary">
+                Objective: {objectiveLabels[selectedCase.objective] ?? selectedCase.objective}
               </p>
               <div className="hero-metric">
                 <span>Real after-tax future value</span>

@@ -57,6 +57,7 @@ h3 { margin-bottom: 8px; }
 .badge { background: #eaf6ef; border-radius: 999px; color: #126c46; font-size: 12px; font-weight: 700; padding: 7px 10px; }
 .report-form { display: grid; gap: 15px 18px; grid-template-columns: 1fr 1fr; }
 .report-form label { color: #536158; font-size: 13px; font-weight: 650; }
+.field-help { color: #77847b; display: block; font-size: 11px; font-weight: 500; line-height: 1.45; margin-top: 7px; }
 .full-field { grid-column: 1 / -1; }
 input, select {
   background: #fbfcfa;
@@ -103,6 +104,7 @@ input:focus, select:focus { border-color: #168557; box-shadow: 0 0 0 3px rgba(22
 .result-toolbar .result-title { margin: 0; }
 .result-actions { display: flex; flex-wrap: wrap; gap: 12px; justify-content: flex-end; }
 .print-metadata { display: none; }
+.objective-summary { color: #9eb1a5; font-size: 12px; margin: 10px 0 0; }
 .report-list { display: grid; gap: 10px; }
 .report-row { align-items: center; border: 1px solid #e3e9e1; border-radius: 11px; display: flex; gap: 12px; padding: 7px 9px 7px 15px; }
 .report-open { background: none; border: 0; cursor: pointer; flex: 1; padding: 7px 0; text-align: left; }
@@ -140,6 +142,7 @@ input:focus, select:focus { border-color: #168557; box-shadow: 0 0 0 3px rgba(22
   .result-panel .step { color: #126c46; }
   .result-title { color: #536158; font-size: 20px; }
   .print-metadata { color: #536158; display: block; font-size: 11px; margin: 8px 0 22px; }
+  .objective-summary { color: #39483f; }
   .hero-metric, .metric-grid > div, .warnings { break-inside: avoid; }
   .hero-metric, .warnings { border-color: #b9c4bc; }
   .hero-metric span, .metric-grid span { color: #536158; }
