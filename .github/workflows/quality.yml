@@ -41,7 +41,11 @@ jobs:
         with:
           node-version: '24'
           cache: pnpm
+      - uses: dart-lang/setup-dart@v1
+        with:
+          sdk: stable
       - run: pnpm install --frozen-lockfile
+      - run: dart pub get
       - run: pnpm --filter wealth-planner-backend run typecheck
       - run: pnpm --filter wealth-planner-backend test
 
