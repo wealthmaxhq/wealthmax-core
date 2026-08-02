@@ -9,6 +9,7 @@ import {
   getDecisionReport,
   listDecisionReports,
   storeDecisionReport,
+  updateDecisionReportGoal,
 } from '../lib/storedDecisionReports';
 import {
   decisionReportCsv,
@@ -70,6 +71,33 @@ router.get('/:id/export.csv', (req, res) => {
     `attachment; filename="${decisionReportCsvFilename(stored.title)}"`,
   );
   return res.send(decisionReportCsv(stored));
+});
+
+router.patch('/:id/goal', (req, res) => {
+  const ownerId = userId(req);
+  if (!getDecisionReport(req.params.id, ownerId)) {
+    return res.status(404).json({ error: 'Not found' });
+  }
+  const requestedGoalId = (req.body as Record<string, unknown> | undefined)?.goalId;
+  if (requestedGoalId !== null && typeof requestedGoalId !== 'string') {
+    return res.status(400).json({ error: 'goalId must be a string or null.' });
+  }
+  if (typeof requestedGoalId === 'string') {
+    if (!requestedGoalId.trim()) {
+      return res.status(400).json({ error: 'goalId must not be empty.' });
+    }
+    const goal = getGoalById(requestedGoalId);
+    if (!goal || goal.userId !== ownerId) {
+      return res.status(400).json({ error: 'Linked goal was not found.' });
+    }
+  }
+  const stored = updateDecisionReportGoal(
+    req.params.id,
+    ownerId,
+    typeof requestedGoalId === 'string' ? requestedGoalId : undefined,
+  );
+  if (!stored) return res.status(404).json({ error: 'Not found' });
+  return res.json({ apiVersion: 'v1', ...stored });
 });
 
 router.get('/:id', (req, res) => {

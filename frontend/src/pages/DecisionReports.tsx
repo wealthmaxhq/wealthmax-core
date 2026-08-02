@@ -10,6 +10,7 @@ import {
   listGoals,
   listDecisionReports,
   StoredDecisionReport,
+  updateDecisionReportGoal,
 } from '../api';
 
 type FormState = {
@@ -124,6 +125,7 @@ export default function DecisionReports() {
   const [selected, setSelected] = useState<StoredDecisionReport | null>(null);
   const [loading, setLoading] = useState(true);
   const [calculating, setCalculating] = useState(false);
+  const [updatingGoal, setUpdatingGoal] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const refresh = async () => {
@@ -240,6 +242,21 @@ export default function DecisionReports() {
     document.title = `${report.title} - WealthMax`;
     window.print();
     document.title = previousTitle;
+  };
+
+  const reassignGoal = async (goalId: string) => {
+    if (!selected) return;
+    setUpdatingGoal(true);
+    setError(null);
+    try {
+      const response = await updateDecisionReportGoal(selected.id, goalId || null);
+      setSelected(response.data);
+      await refresh();
+    } catch (requestError) {
+      setError(errorMessage(requestError));
+    } finally {
+      setUpdatingGoal(false);
+    }
   };
 
   const selectedCase = selected?.report.cases.find((item) => item.id === 'base')
@@ -543,11 +560,17 @@ export default function DecisionReports() {
               <p className="objective-summary">
                 Objective: {objectiveLabels[selectedCase.objective] ?? selectedCase.objective}
               </p>
-              {selected.goalId && (
-                <p className="objective-summary">
-                  Goal: {goalTitle(selected.goalId) ?? 'Linked goal'}
-                </p>
-              )}
+              <label className="report-goal-editor">
+                Goal
+                <select
+                  disabled={updatingGoal}
+                  value={selected.goalId ?? ''}
+                  onChange={(event) => void reassignGoal(event.target.value)}
+                >
+                  <option value="">No linked goal</option>
+                  {goals.map((goal) => <option key={goal.id} value={goal.id}>{goal.title}</option>)}
+                </select>
+              </label>
               <div className="hero-metric">
                 <span>Real after-tax future value</span>
                 <strong>

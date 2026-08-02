@@ -92,6 +92,28 @@ describe('Decision reports E2E', () => {
     expect(get.status).toBe(200);
     expect(get.body.report).toEqual(response.body.report);
 
+    const secondGoal = await request(app)
+      .post('/api/goals')
+      .set('Authorization', `Bearer ${ownerToken}`)
+      .send({ title: 'Second goal', targetAmount: 25000 });
+    const reassigned = await request(app)
+      .patch(`/api/v1/decision-reports/${response.body.id}/goal`)
+      .set('Authorization', `Bearer ${ownerToken}`)
+      .send({ goalId: secondGoal.body.goal.id });
+    expect(reassigned.status).toBe(200);
+    expect(reassigned.body.goalId).toBe(secondGoal.body.goal.id);
+    const unassigned = await request(app)
+      .patch(`/api/v1/decision-reports/${response.body.id}/goal`)
+      .set('Authorization', `Bearer ${ownerToken}`)
+      .send({ goalId: null });
+    expect(unassigned.status).toBe(200);
+    expect(unassigned.body).not.toHaveProperty('goalId');
+    const restoredLink = await request(app)
+      .patch(`/api/v1/decision-reports/${response.body.id}/goal`)
+      .set('Authorization', `Bearer ${ownerToken}`)
+      .send({ goalId });
+    expect(restoredLink.body.goalId).toBe(goalId);
+
     const exportResponse = await request(app)
       .get(`/api/v1/decision-reports/${response.body.id}/export.csv`)
       .set('Authorization', `Bearer ${ownerToken}`);
@@ -117,6 +139,16 @@ describe('Decision reports E2E', () => {
       .set('Authorization', `Bearer ${ownerToken}`)
       .send({ ...report, goalId: foreignGoal.body.goal.id });
     expect(rejectedLink.status).toBe(400);
+    const rejectedReassignment = await request(app)
+      .patch(`/api/v1/decision-reports/${response.body.id}/goal`)
+      .set('Authorization', `Bearer ${ownerToken}`)
+      .send({ goalId: foreignGoal.body.goal.id });
+    expect(rejectedReassignment.status).toBe(400);
+    const hiddenReassignment = await request(app)
+      .patch(`/api/v1/decision-reports/${response.body.id}/goal`)
+      .set('Authorization', `Bearer ${otherToken}`)
+      .send({ goalId: null });
+    expect(hiddenReassignment.status).toBe(404);
     const hidden = await request(app)
       .get(`/api/v1/decision-reports/${response.body.id}`)
       .set('Authorization', `Bearer ${otherToken}`);
