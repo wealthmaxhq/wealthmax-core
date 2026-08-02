@@ -17,7 +17,9 @@ type FormState = {
   loanRate: string;
   tenureMonths: string;
   extraCash: string;
+  downsideReturn: string;
   investmentReturn: string;
+  upsideReturn: string;
   expenseRatio: string;
   taxRate: string;
   inflationRate: string;
@@ -30,7 +32,9 @@ const initialForm: FormState = {
   loanRate: '9.5',
   tenureMonths: '240',
   extraCash: '100000',
+  downsideReturn: '8',
   investmentReturn: '12',
+  upsideReturn: '16',
   expenseRatio: '1',
   taxRate: '20',
   inflationRate: '6',
@@ -44,13 +48,17 @@ function errorMessage(error: unknown): string {
 }
 
 function reportPayload(form: FormState) {
-  const selectedReturn = form.investmentReturn.trim();
+  const returns = [
+    { id: 'downside', label: 'Downside case', value: form.downsideReturn.trim() },
+    { id: 'base', label: 'Base case', value: form.investmentReturn.trim() },
+    { id: 'upside', label: 'Upside case', value: form.upsideReturn.trim() },
+  ];
+  const returnScenarios = returns.map((scenario) => scenario.value);
   return {
     title: form.title.trim(),
-    cases: [
-      {
-        id: 'base',
-        label: 'Base case',
+    cases: returns.map((scenario) => ({
+        id: scenario.id,
+        label: scenario.label,
         currency: form.currency,
         loan: {
           principal: form.principal.trim(),
@@ -59,19 +67,14 @@ function reportPayload(form: FormState) {
         },
         extraCash: form.extraCash.trim(),
         decisionInstallment: 1,
-        grossAnnualInvestmentReturnPercent: selectedReturn,
+        grossAnnualInvestmentReturnPercent: scenario.value,
         annualExpenseRatioPercent: form.expenseRatio.trim(),
         allocationStepPercent: 10,
         objective: 'maximumFutureValue',
-        grossAnnualReturnScenariosPercent: [
-          '0',
-          selectedReturn,
-          (Number(selectedReturn) + 4).toString(),
-        ],
+        grossAnnualReturnScenariosPercent: returnScenarios,
         investmentGainTaxRatePercent: form.taxRate.trim(),
         annualInflationRatePercent: form.inflationRate.trim(),
-      },
-    ],
+    })),
   };
 }
 
@@ -108,6 +111,13 @@ export default function DecisionReports() {
 
   const calculate = async (event: FormEvent) => {
     event.preventDefault();
+    const downside = Number(form.downsideReturn);
+    const base = Number(form.investmentReturn);
+    const upside = Number(form.upsideReturn);
+    if (!(downside <= base && base <= upside)) {
+      setError('Investment returns must be ordered downside, base, then upside.');
+      return;
+    }
     setCalculating(true);
     setError(null);
     try {
@@ -170,7 +180,8 @@ export default function DecisionReports() {
     document.title = previousTitle;
   };
 
-  const selectedCase = selected?.report.cases[0];
+  const selectedCase = selected?.report.cases.find((item) => item.id === 'base')
+    ?? selected?.report.cases[0];
 
   if (!authenticated) {
     return (
@@ -288,12 +299,30 @@ export default function DecisionReports() {
               />
             </label>
             <label>
-              Investment return (% p.a.)
+              Downside return (% p.a.)
+              <input
+                required
+                inputMode="decimal"
+                value={form.downsideReturn}
+                onChange={(event) => update('downsideReturn', event.target.value)}
+              />
+            </label>
+            <label>
+              Base return (% p.a.)
               <input
                 required
                 inputMode="decimal"
                 value={form.investmentReturn}
                 onChange={(event) => update('investmentReturn', event.target.value)}
+              />
+            </label>
+            <label>
+              Upside return (% p.a.)
+              <input
+                required
+                inputMode="decimal"
+                value={form.upsideReturn}
+                onChange={(event) => update('upsideReturn', event.target.value)}
               />
             </label>
             <label>
@@ -391,6 +420,39 @@ export default function DecisionReports() {
                 <div>
                   <span>Tax changed choice</span>
                   <strong>{selectedCase.selectionChangedByTax ? 'Yes' : 'No'}</strong>
+                </div>
+              </div>
+              <div className="scenario-section">
+                <div className="scenario-heading">
+                  <h3>Scenario comparison</h3>
+                  <span>
+                    Real-value range {selected.report.summary.selectedRealValueRange}
+                  </span>
+                </div>
+                <div className="scenario-table-wrap">
+                  <table className="scenario-table">
+                    <thead>
+                      <tr>
+                        <th scope="col">Scenario</th>
+                        <th scope="col">Prepay</th>
+                        <th scope="col">Real value</th>
+                        <th scope="col">Tax</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {selected.report.cases.map((reportCase) => (
+                        <tr
+                          key={reportCase.id}
+                          className={reportCase.id === 'base' ? 'base-scenario' : undefined}
+                        >
+                          <th scope="row">{reportCase.label}</th>
+                          <td>{reportCase.selectedPrepaymentAllocationPercent}%</td>
+                          <td>{reportCase.realAfterTaxFutureValue}</td>
+                          <td>{reportCase.estimatedTax}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
                 </div>
               </div>
               {selected.report.warnings.length > 0 && (

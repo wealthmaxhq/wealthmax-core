@@ -138,4 +138,34 @@ describe('Decision reports E2E', () => {
     expect(response.status).toBe(400);
     expect(response.body.error).toContain('principal');
   }, 120_000);
+
+  test('calculates downside, base, and upside cases in one report', async () => {
+    const multiScenario = structuredClone(report);
+    const baseCase = multiScenario.cases[0];
+    const scenarios = [
+      { id: 'downside', label: 'Downside case', value: '8' },
+      { id: 'base', label: 'Base case', value: '12' },
+      { id: 'upside', label: 'Upside case', value: '16' },
+    ];
+    multiScenario.cases = scenarios.map((scenario) => ({
+      ...baseCase,
+      id: scenario.id,
+      label: scenario.label,
+      grossAnnualInvestmentReturnPercent: scenario.value,
+      grossAnnualReturnScenariosPercent: scenarios.map((item) => item.value),
+    }));
+
+    const response = await request(app)
+      .post('/api/v1/decision-reports')
+      .set('Authorization', `Bearer ${await token()}`)
+      .send(multiScenario);
+
+    expect(response.status).toBe(201);
+    expect(response.body.report.cases.map((item: { id: string }) => item.id)).toEqual(
+      ['downside', 'base', 'upside'],
+    );
+    expect(response.body.report.summary.selectedRealValueRange).toEqual(
+      expect.any(String),
+    );
+  }, 120_000);
 });
