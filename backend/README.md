@@ -47,6 +47,8 @@ Successful responses use HTTP 201:
 ```json
 {
   "apiVersion": "v1",
+  "id": "server-generated-report-id",
+  "createdAt": "2026-08-02T00:00:00.000Z",
   "report": {
     "schemaVersion": 1,
     "snapshotFormula": { "id": "REP-002" },
@@ -54,6 +56,13 @@ Successful responses use HTTP 201:
   }
 }
 ```
+
+Successful calculations are stored for the authenticated user. The collection
+and item endpoints never expose another user's reports:
+
+- `GET /api/v1/decision-reports` lists report metadata without large snapshots.
+- `GET /api/v1/decision-reports/:id` returns one stored snapshot.
+- `DELETE /api/v1/decision-reports/:id` permanently deletes an owned report.
 
 Invalid report inputs return HTTP 400. An unavailable or timed-out calculation
 engine returns HTTP 503. Bridge output is capped at 2 MiB and calculations time
