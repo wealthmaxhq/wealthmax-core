@@ -39,6 +39,7 @@ a { color: inherit; }
 .nav-links a:hover { color: #126c46; }
 .nav-links .nav-cta { background: #17211b; border-radius: 9px; color: white; padding: 9px 14px; }
 .account-name { color: #607067; font-size: 13px; font-weight: 650; max-width: 180px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.account-name:hover { color: #126c46; }
 .nav-logout { background: #17211b; border: 0; border-radius: 9px; color: #fff; cursor: pointer; font-size: 13px; font-weight: 700; padding: 9px 14px; }
 
 main { margin: 0 auto; max-width: 1180px; padding: 52px 24px 72px; }
@@ -139,6 +140,12 @@ textarea { resize: vertical; }
 .auth-form .primary-button { margin-top: 5px; }
 .auth-switch { color: #77847b; font-size: 13px; margin: 22px 0 0; text-align: center; }
 .auth-switch a { color: #126c46; font-weight: 750; }
+.account-grid { display: grid; gap: 24px; grid-template-columns: 1fr 1fr; }
+.account-card { padding: 32px; }
+.account-card h2 { margin-bottom: 8px; }
+.account-card .alert, .account-card .success-alert { margin: 20px 0 0; }
+.account-card input:disabled { background: #f2f4f2; color: #77847b; cursor: not-allowed; }
+.success-alert { background: #eaf7ef; border: 1px solid #b9e2c9; border-radius: 10px; color: #126c46; margin-bottom: 20px; padding: 12px 14px; }
 .dashboard-header { align-items: end; display: flex; gap: 24px; justify-content: space-between; margin-bottom: 30px; }
 .dashboard-header .inline-button { flex: none; margin: 0; }
 .dashboard-metrics { display: grid; gap: 14px; grid-template-columns: repeat(3, 1fr); margin-bottom: 22px; }
@@ -182,6 +189,7 @@ textarea { resize: vertical; }
 .goal-actions { align-items: center; display: flex; gap: 8px; justify-content: flex-end; }
 
 @media (max-width: 820px) {
+  .account-grid { grid-template-columns: 1fr; }
   .nav-links a:not(.nav-cta) { display: none; }
   main { padding-top: 36px; }
   .workspace-grid { grid-template-columns: 1fr; }

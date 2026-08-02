@@ -1,6 +1,12 @@
 import { Router } from 'express';
 import bcrypt from 'bcrypt';
-import { createUser, findUserByEmail } from '../lib/users';
+import {
+  createUser,
+  findUserByEmail,
+  findUserById,
+  updateUserName,
+  updateUserPassword,
+} from '../lib/users';
 import {
   signToken,
   authMiddleware,
@@ -57,6 +63,50 @@ router.post('/login', async (req, res) => {
 
 router.get('/me', authMiddleware, (req, res) => {
   return res.json({ user: (req as AuthenticatedRequest).user });
+});
+
+router.patch('/me', authMiddleware, (req, res) => {
+  if (!Object.prototype.hasOwnProperty.call(req.body ?? {}, 'name')) {
+    return res.status(400).json({ error: 'Name is required.' });
+  }
+  let name: string | undefined;
+  try {
+    name = normalizedName(req.body.name);
+  } catch (error) {
+    return res.status(400).json({ error: (error as Error).message });
+  }
+  const authenticatedUser = (req as AuthenticatedRequest).user!;
+  const user = updateUserName(authenticatedUser.id, name);
+  if (!user) return res.status(404).json({ error: 'User not found' });
+  return res.json({ user: { id: user.id, email: user.email, name: user.name } });
+});
+
+router.post('/change-password', authMiddleware, async (req, res) => {
+  const currentPassword = req.body?.currentPassword;
+  let newPassword: string;
+  if (
+    typeof currentPassword !== 'string'
+    || !currentPassword
+    || currentPassword.length > 128
+  ) return res.status(400).json({ error: 'Current password is incorrect.' });
+  try {
+    newPassword = validPassword(req.body?.newPassword);
+  } catch (error) {
+    return res.status(400).json({ error: (error as Error).message });
+  }
+  if (currentPassword === newPassword) {
+    return res.status(400).json({ error: 'New password must be different.' });
+  }
+  const authenticatedUser = (req as AuthenticatedRequest).user!;
+  const user = findUserById(authenticatedUser.id);
+  if (!user || !await bcrypt.compare(currentPassword, user.passwordHash)) {
+    return res.status(400).json({ error: 'Current password is incorrect.' });
+  }
+  const hash = await bcrypt.hash(newPassword, 12);
+  if (!updateUserPassword(user.id, hash)) {
+    return res.status(404).json({ error: 'User not found' });
+  }
+  return res.status(204).send();
 });
 
 export default router;

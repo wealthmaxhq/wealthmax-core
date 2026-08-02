@@ -90,6 +90,14 @@ export function getCurrentUser() {
   return api.get<{ user: User }>('/api/auth/me');
 }
 
+export function updateCurrentUser(name: string | null) {
+  return api.patch<{ user: User }>('/api/auth/me', { name });
+}
+
+export function changePassword(data: { currentPassword: string; newPassword: string }) {
+  return api.post<void>('/api/auth/change-password', data);
+}
+
 export function listGoals() {
   return api.get<{ goals: Goal[] }>('/api/goals');
 }
