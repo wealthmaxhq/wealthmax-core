@@ -4,6 +4,7 @@ import Login from './pages/Login';
 import Register from './pages/Register';
 import Goals from './pages/Goals';
 import DecisionReports from './pages/DecisionReports';
+import Dashboard from './pages/Dashboard';
 import { useAuth } from './auth';
 
 function RequireAuth({ children }: { children: ReactNode }) {
@@ -16,6 +17,15 @@ function RequireAuth({ children }: { children: ReactNode }) {
 
 const restoringSession = (
   <main><p className="muted">Restoring your account…</p></main>
+);
+
+const landingPage = (
+  <main className="home-hero">
+    <p className="eyebrow">Clear decisions. Exact mathematics.</p>
+    <h1>Make your extra money work harder.</h1>
+    <p>Compare loan prepayment and investing on the same timeline, after fees, tax, and inflation.</p>
+    <Link className="primary-button inline-button" to="/reports">Build a decision report</Link>
+  </main>
 );
 
 export default function App() {
@@ -46,19 +56,7 @@ export default function App() {
       <Routes>
         <Route
           path="/"
-          element={
-            <main className="home-hero">
-              <p className="eyebrow">Clear decisions. Exact mathematics.</p>
-              <h1>Make your extra money work harder.</h1>
-              <p>
-                Compare loan prepayment and investing on the same timeline,
-                after fees, tax, and inflation.
-              </p>
-              <Link className="primary-button inline-button" to="/reports">
-                Build a decision report
-              </Link>
-            </main>
-          }
+          element={!ready ? restoringSession : user ? <Dashboard /> : landingPage}
         />
         <Route path="/login" element={!ready ? restoringSession : user ? <Navigate to="/reports" replace /> : <Login />} />
         <Route path="/register" element={!ready ? restoringSession : user ? <Navigate to="/reports" replace /> : <Register />} />
