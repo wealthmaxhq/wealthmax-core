@@ -37,8 +37,8 @@ export default function Login() {
         <p className="muted">Continue to your private WealthMax workspace.</p>
         {error && <div className="alert">{error}</div>}
         <form className="auth-form" onSubmit={submit}>
-          <label>Email<input required type="email" autoComplete="email" value={email} onChange={e => setEmail(e.target.value)} /></label>
-          <label>Password<input required type="password" autoComplete="current-password" value={password} onChange={e => setPassword(e.target.value)} /></label>
+          <label>Email<input required maxLength={254} type="email" autoComplete="email" value={email} onChange={e => setEmail(e.target.value)} /></label>
+          <label>Password<input required maxLength={128} type="password" autoComplete="current-password" value={password} onChange={e => setPassword(e.target.value)} /></label>
           <button className="primary-button" type="submit" disabled={submitting}>{submitting ? 'Signing in…' : 'Sign in'}</button>
         </form>
         <p className="auth-switch">New to WealthMax? <Link to="/register">Create an account</Link></p>

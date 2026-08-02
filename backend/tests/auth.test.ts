@@ -28,4 +28,42 @@ describe('Auth E2E', () => {
     expect(me.status).toBe(200);
     expect(me.body.user.email).toBe(email);
   });
+
+  test('normalizes identity and enforces registration policy', async () => {
+    const registration = await request(app).post('/api/auth/register').send({
+      email: '  Mixed.Case@Example.COM ',
+      password: 'password123',
+      name: '  Wealth Builder  ',
+    });
+    expect(registration.status).toBe(200);
+    expect(registration.body.user).toEqual(expect.objectContaining({
+      email: 'mixed.case@example.com',
+      name: 'Wealth Builder',
+    }));
+
+    const login = await request(app).post('/api/auth/login').send({
+      email: 'MIXED.CASE@EXAMPLE.COM',
+      password: 'password123',
+    });
+    expect(login.status).toBe(200);
+
+    const duplicate = await request(app).post('/api/auth/register').send({
+      email: 'mixed.case@example.com',
+      password: 'another-password',
+    });
+    expect(duplicate.status).toBe(400);
+
+    const weakPassword = await request(app).post('/api/auth/register').send({
+      email: 'weak@example.com',
+      password: 'short',
+    });
+    expect(weakPassword.status).toBe(400);
+    expect(weakPassword.body.error).toContain('8 and 128');
+
+    const invalidEmail = await request(app).post('/api/auth/register').send({
+      email: 'not-an-email',
+      password: 'password123',
+    });
+    expect(invalidEmail.status).toBe(400);
+  }, 20_000);
 });

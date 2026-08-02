@@ -36,9 +36,9 @@ export default function Register() {
         <p className="muted">Your reports and goals stay private to your account.</p>
         {error && <div className="alert">{error}</div>}
         <form className="auth-form" onSubmit={submit}>
-          <label>Name<input autoComplete="name" value={name} onChange={e => setName(e.target.value)} /></label>
-          <label>Email<input required type="email" autoComplete="email" value={email} onChange={e => setEmail(e.target.value)} /></label>
-          <label>Password<input required minLength={8} type="password" autoComplete="new-password" value={password} onChange={e => setPassword(e.target.value)} /></label>
+          <label>Name<input maxLength={100} autoComplete="name" value={name} onChange={e => setName(e.target.value)} /></label>
+          <label>Email<input required maxLength={254} type="email" autoComplete="email" value={email} onChange={e => setEmail(e.target.value)} /></label>
+          <label>Password<input required minLength={8} maxLength={128} type="password" autoComplete="new-password" value={password} onChange={e => setPassword(e.target.value)} /></label>
           <button className="primary-button" type="submit" disabled={submitting}>{submitting ? 'Creating account…' : 'Create account'}</button>
         </form>
         <p className="auth-switch">Already have an account? <Link to="/login">Sign in</Link></p>

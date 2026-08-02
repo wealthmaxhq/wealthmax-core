@@ -1,5 +1,15 @@
 # WealthMax backend
 
+## Authentication
+
+Email addresses are trimmed, normalized to lowercase, and validated by the
+server. Passwords must contain 8 to 128 characters; optional names are limited
+to 100 characters. These rules apply to direct API clients as well as the web
+interface.
+
+`JWT_SECRET` is mandatory and must contain at least 32 characters. Tokens expire
+after one hour and are restricted to the WealthMax issuer and web audience.
+
 ## Decision report API
 
 `POST /api/v1/decision-reports` runs the Dart financial engine and returns a
