@@ -132,3 +132,14 @@ export function deleteDecisionReport(id: string, userId: string): boolean {
     .run(id, userId);
   return result.changes > 0;
 }
+
+export function updateDecisionReportGoal(
+  id: string,
+  userId: string,
+  goalId?: string,
+): StoredDecisionReport | undefined {
+  const result = db.prepare(
+    'UPDATE decision_reports SET goalId = ? WHERE id = ? AND userId = ?',
+  ).run(goalId ?? null, id, userId);
+  return result.changes > 0 ? getDecisionReport(id, userId) : undefined;
+}

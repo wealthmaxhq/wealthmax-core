@@ -129,6 +129,13 @@ export function deleteDecisionReport(id: string) {
   return api.delete(`/api/v1/decision-reports/${id}`);
 }
 
+export function updateDecisionReportGoal(id: string, goalId: string | null) {
+  return api.patch<StoredDecisionReport & { apiVersion: string }>(
+    `/api/v1/decision-reports/${id}/goal`,
+    { goalId },
+  );
+}
+
 export function exportDecisionReportCsv(id: string) {
   return api.get<Blob>(`/api/v1/decision-reports/${id}/export.csv`, {
     responseType: 'blob',

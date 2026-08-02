@@ -66,6 +66,8 @@ authenticated user. Deleting that goal keeps the report and removes the link.
 
 - `GET /api/v1/decision-reports` lists report metadata without large snapshots.
 - `GET /api/v1/decision-reports/:id` returns one stored snapshot.
+- `PATCH /api/v1/decision-reports/:id/goal` reassigns an existing report to an
+  owned goal, or unlinks it when `goalId` is `null`, without recalculating it.
 - `GET /api/v1/decision-reports/:id/export.csv` downloads an Excel-compatible
   UTF-8 CSV containing the report's case-level decision results.
 - `DELETE /api/v1/decision-reports/:id` permanently deletes an owned report.
