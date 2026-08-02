@@ -30,8 +30,7 @@ final class WeightedDecisionAnalysisSnapshot {
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
-      other is WeightedDecisionAnalysisSnapshot &&
-          _snapshot == other._snapshot;
+      other is WeightedDecisionAnalysisSnapshot && _snapshot == other._snapshot;
 
   @override
   int get hashCode => _snapshot.hashCode;

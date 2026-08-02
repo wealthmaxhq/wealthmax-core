@@ -80,7 +80,8 @@ void main() {
 
   group('WeightedDecisionAnalysisSnapshot', () {
     test('is immutable, JSON-safe, and versioned', () {
-      final decoded = jsonDecode(snapshot.value.encode()) as Map<String, Object?>;
+      final decoded =
+          jsonDecode(snapshot.value.encode()) as Map<String, Object?>;
 
       expect(decoded['schemaVersion'], 1);
       expect(decoded.keys, <String>[
@@ -92,7 +93,10 @@ void main() {
         'warnings',
       ]);
       expect(jsonEncode(snapshot.value.toJson()), snapshot.value.encode());
-      expect(() => snapshot.value.toJson()['extra'] = true, throwsUnsupportedError);
+      expect(
+        () => snapshot.value.toJson()['extra'] = true,
+        throwsUnsupportedError,
+      );
     });
 
     test('rejects invalid schema versions and JSON-unsafe values', () {
@@ -131,26 +135,36 @@ void main() {
         summary['expectedRealAfterTaxFutureValue'],
         weighted.value.expectedRealAfterTaxFutureValue.amount.toString(),
       );
-      expect(summary['expectedPrepaymentAllocationPercent'], weighted.value.expectedPrepaymentAllocation.percent.toString());
+      expect(
+        summary['expectedPrepaymentAllocationPercent'],
+        weighted.value.expectedPrepaymentAllocation.percent.toString(),
+      );
       expect(weights, hasLength(2));
-      expect((weights.first! as Map<Object?, Object?>)['probabilityPercent'], '60');
+      expect(
+        (weights.first! as Map<Object?, Object?>)['probabilityPercent'],
+        '60',
+      );
       expect(snapshot.warnings, weighted.warnings);
     });
 
     test('publishes transparent REP-004 metadata', () {
       expect(snapshot.metadata.formulaId, 'REP-004');
       expect(snapshot.metadata.inputs['sourceFormulaId'], 'REP-003');
-      expect(snapshot.metadata.assumptions['financialValuesRecalculated'], isFalse);
-      expect(snapshot.metadata.assumptions['exactDecimalsEncodedAsStrings'], isTrue);
+      expect(
+        snapshot.metadata.assumptions['financialValuesRecalculated'],
+        isFalse,
+      );
+      expect(
+        snapshot.metadata.assumptions['exactDecimalsEncodedAsStrings'],
+        isTrue,
+      );
       expect(snapshot.metadata.details['schemaVersion'], 1);
       expect(snapshot.metadata.details['encodedLength'], greaterThan(0));
     });
 
     test('is deterministic and has value equality', () {
-      final second = const WeightedDecisionAnalysisSnapshotCalculator().calculate(
-        weighted,
-        calculatedAt: snapshotCalculatedAt,
-      );
+      final second = const WeightedDecisionAnalysisSnapshotCalculator()
+          .calculate(weighted, calculatedAt: snapshotCalculatedAt);
 
       expect(second, snapshot);
       expect(second.hashCode, snapshot.hashCode);
