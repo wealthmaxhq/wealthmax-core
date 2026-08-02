@@ -2,6 +2,19 @@ import axios from 'axios';
 
 const api = axios.create({ baseURL: import.meta.env.VITE_API_BASE_URL || '' });
 
+export const AUTH_EXPIRED_EVENT = 'wealthmax:auth-expired';
+
+export interface User {
+  id: string;
+  email: string;
+  name?: string;
+}
+
+interface AuthResponse {
+  token: string;
+  user: User;
+}
+
 export interface DecisionReportSummary {
   id: string;
   title: string;
@@ -51,11 +64,15 @@ export function setAuthToken(token: string | null) {
 }
 
 export function register(data: { email: string; password: string; name?: string }) {
-  return api.post('/api/auth/register', data);
+  return api.post<AuthResponse>('/api/auth/register', data);
 }
 
 export function login(data: { email: string; password: string }) {
-  return api.post('/api/auth/login', data);
+  return api.post<AuthResponse>('/api/auth/login', data);
+}
+
+export function getCurrentUser() {
+  return api.get<{ user: User }>('/api/auth/me');
 }
 
 export function listGoals() {
@@ -94,3 +111,15 @@ export function exportDecisionReportCsv(id: string) {
     responseType: 'blob',
   });
 }
+
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response?.status === 401 && localStorage.getItem('token')) {
+      localStorage.removeItem('token');
+      setAuthToken(null);
+      window.dispatchEvent(new Event(AUTH_EXPIRED_EVENT));
+    }
+    return Promise.reject(error);
+  },
+);

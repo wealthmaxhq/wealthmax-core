@@ -1,11 +1,25 @@
-import React from 'react';
-import { Routes, Route, Link } from 'react-router-dom';
+import React, { ReactNode } from 'react';
+import { Routes, Route, Link, Navigate, useLocation } from 'react-router-dom';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import Goals from './pages/Goals';
 import DecisionReports from './pages/DecisionReports';
+import { useAuth } from './auth';
+
+function RequireAuth({ children }: { children: ReactNode }) {
+  const { user, ready } = useAuth();
+  const location = useLocation();
+  if (!ready) return <main><p className="muted">Restoring your account…</p></main>;
+  if (!user) return <Navigate to="/login" replace state={{ from: location.pathname }} />;
+  return children;
+}
+
+const restoringSession = (
+  <main><p className="muted">Restoring your account…</p></main>
+);
 
 export default function App() {
+  const { user, ready, logout } = useAuth();
   return (
     <div className="app-shell">
       <nav className="top-nav">
@@ -16,8 +30,17 @@ export default function App() {
         <div className="nav-links">
           <Link to="/reports">Decision reports</Link>
           <Link to="/goals">Goals</Link>
-          <Link to="/login">Login</Link>
-          <Link className="nav-cta" to="/register">Get started</Link>
+          {!ready ? null : user ? (
+            <>
+              <span className="account-name">{user.name || user.email}</span>
+              <button className="nav-logout" type="button" onClick={logout}>Log out</button>
+            </>
+          ) : (
+            <>
+              <Link to="/login">Login</Link>
+              <Link className="nav-cta" to="/register">Get started</Link>
+            </>
+          )}
         </div>
       </nav>
       <Routes>
@@ -37,10 +60,10 @@ export default function App() {
             </main>
           }
         />
-        <Route path="/login" element={<Login />} />
-        <Route path="/register" element={<Register />} />
-        <Route path="/goals" element={<Goals />} />
-        <Route path="/reports" element={<DecisionReports />} />
+        <Route path="/login" element={!ready ? restoringSession : user ? <Navigate to="/reports" replace /> : <Login />} />
+        <Route path="/register" element={!ready ? restoringSession : user ? <Navigate to="/reports" replace /> : <Register />} />
+        <Route path="/goals" element={<RequireAuth><Goals /></RequireAuth>} />
+        <Route path="/reports" element={<RequireAuth><DecisionReports /></RequireAuth>} />
       </Routes>
     </div>
   );

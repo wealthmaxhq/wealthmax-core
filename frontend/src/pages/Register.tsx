@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { register, setAuthToken } from '../api';
+import { Link, useNavigate } from 'react-router-dom';
+import { register } from '../api';
+import { useAuth } from '../auth';
 
 export default function Register() {
   const [email, setEmail] = useState('');
@@ -8,39 +9,40 @@ export default function Register() {
   const [name, setName] = useState('');
   const [error, setError] = useState<string | null>(null);
   const nav = useNavigate();
+  const { establishSession } = useAuth();
+  const [submitting, setSubmitting] = useState(false);
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setSubmitting(true);
+    setError(null);
     try {
       const res = await register({ email, password, name });
-      const token = res.data.token;
-      localStorage.setItem('token', token);
-      setAuthToken(token);
-      nav('/goals');
-    } catch (err: any) {
-      setError(err?.response?.data?.error || 'Register failed');
+      establishSession(res.data.token, res.data.user);
+      nav('/reports', { replace: true });
+    } catch (err: unknown) {
+      const response = err as { response?: { data?: { error?: string } } };
+      setError(response.response?.data?.error || 'Registration failed');
+    } finally {
+      setSubmitting(false);
     }
   };
 
   return (
-    <div>
-      <h2>Register</h2>
-      <form onSubmit={submit}>
-        <div>
-          <label>Name</label>
-          <input value={name} onChange={e => setName(e.target.value)} />
-        </div>
-        <div>
-          <label>Email</label>
-          <input value={email} onChange={e => setEmail(e.target.value)} />
-        </div>
-        <div>
-          <label>Password</label>
-          <input type="password" value={password} onChange={e => setPassword(e.target.value)} />
-        </div>
-        {error && <div style={{ color: 'red' }}>{error}</div>}
-        <button type="submit">Register</button>
-      </form>
-    </div>
+    <main className="auth-page">
+      <section className="panel auth-card">
+        <p className="eyebrow">Start making clearer decisions</p>
+        <h1>Create account</h1>
+        <p className="muted">Your reports and goals stay private to your account.</p>
+        {error && <div className="alert">{error}</div>}
+        <form className="auth-form" onSubmit={submit}>
+          <label>Name<input autoComplete="name" value={name} onChange={e => setName(e.target.value)} /></label>
+          <label>Email<input required type="email" autoComplete="email" value={email} onChange={e => setEmail(e.target.value)} /></label>
+          <label>Password<input required minLength={8} type="password" autoComplete="new-password" value={password} onChange={e => setPassword(e.target.value)} /></label>
+          <button className="primary-button" type="submit" disabled={submitting}>{submitting ? 'Creating account…' : 'Create account'}</button>
+        </form>
+        <p className="auth-switch">Already have an account? <Link to="/login">Sign in</Link></p>
+      </section>
+    </main>
   );
 }
