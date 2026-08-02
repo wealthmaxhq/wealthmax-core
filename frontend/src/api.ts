@@ -10,6 +10,20 @@ export interface User {
   name?: string;
 }
 
+export interface Goal {
+  id: string;
+  title: string;
+  targetAmount: number;
+  currentAmount: number;
+  targetDate?: string;
+  notes?: string;
+  createdAt: string;
+  updatedAt?: string;
+}
+
+export type GoalInput = Pick<Goal, 'title' | 'targetAmount' | 'currentAmount'>
+  & Partial<Pick<Goal, 'targetDate' | 'notes'>>;
+
 interface AuthResponse {
   token: string;
   user: User;
@@ -76,11 +90,19 @@ export function getCurrentUser() {
 }
 
 export function listGoals() {
-  return api.get('/api/goals');
+  return api.get<{ goals: Goal[] }>('/api/goals');
 }
 
-export function createGoal(payload: any) {
-  return api.post('/api/goals', payload);
+export function createGoal(payload: GoalInput) {
+  return api.post<{ goal: Goal }>('/api/goals', payload);
+}
+
+export function updateGoal(id: string, payload: Partial<GoalInput>) {
+  return api.put<{ goal: Goal }>(`/api/goals/${id}`, payload);
+}
+
+export function deleteGoal(id: string) {
+  return api.delete(`/api/goals/${id}`);
 }
 
 export function listDecisionReports() {

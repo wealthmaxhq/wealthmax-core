@@ -39,6 +39,27 @@ describe('Goals E2E', () => {
     expect(upd.status).toBe(200);
     expect(upd.body.goal.currentAmount).toBe(500);
 
+    const invalid = await request(app)
+      .put(`/api/goals/${goal.id}`)
+      .set('Authorization', `Bearer ${token}`)
+      .send({ targetAmount: -1 });
+    expect(invalid.status).toBe(400);
+
+    const other = await request(app).post('/api/auth/register').send({
+      email: 'other-goals@example.com',
+      password,
+    });
+    const hiddenUpdate = await request(app)
+      .put(`/api/goals/${goal.id}`)
+      .set('Authorization', `Bearer ${other.body.token}`)
+      .send({ currentAmount: 9999 });
+    expect(hiddenUpdate.status).toBe(404);
+
+    const unchanged = await request(app)
+      .get(`/api/goals/${goal.id}`)
+      .set('Authorization', `Bearer ${token}`);
+    expect(unchanged.body.goal.currentAmount).toBe(500);
+
     // Delete
     const del = await request(app).delete(`/api/goals/${goal.id}`).set('Authorization', `Bearer ${token}`);
     expect(del.status).toBe(204);
