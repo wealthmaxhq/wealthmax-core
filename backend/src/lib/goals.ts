@@ -80,7 +80,13 @@ export function updateGoal(id: string, userId: string, patch: Partial<Goal>): Go
 }
 
 export function deleteGoal(id: string, userId: string): boolean {
-  const stmt = db.prepare('DELETE FROM goals WHERE id = ? AND userId = ?');
-  const info = stmt.run(id, userId);
-  return info.changes > 0;
+  return db.transaction(() => {
+    const existing = getGoalById(id);
+    if (!existing || existing.userId !== userId) return false;
+    db.prepare(
+      'UPDATE decision_reports SET goalId = NULL WHERE goalId = ? AND userId = ?',
+    ).run(id, userId);
+    return db.prepare('DELETE FROM goals WHERE id = ? AND userId = ?')
+      .run(id, userId).changes > 0;
+  })();
 }

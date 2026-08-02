@@ -12,6 +12,7 @@ across JavaScript, Dart, storage, and report-generation boundaries.
 ```json
 {
   "title": "Loan versus investment",
+  "goalId": "optional-owned-goal-id",
   "cases": [
     {
       "id": "base",
@@ -59,6 +60,9 @@ Successful responses use HTTP 201:
 
 Successful calculations are stored for the authenticated user. The collection
 and item endpoints never expose another user's reports:
+
+`goalId` is optional. When supplied, it must identify a goal owned by the
+authenticated user. Deleting that goal keeps the report and removes the link.
 
 - `GET /api/v1/decision-reports` lists report metadata without large snapshots.
 - `GET /api/v1/decision-reports/:id` returns one stored snapshot.

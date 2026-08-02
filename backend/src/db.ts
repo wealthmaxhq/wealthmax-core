@@ -35,6 +35,7 @@ CREATE TABLE IF NOT EXISTS goals (
 CREATE TABLE IF NOT EXISTS decision_reports (
   id TEXT PRIMARY KEY,
   userId TEXT NOT NULL,
+  goalId TEXT,
   title TEXT NOT NULL,
   currency TEXT NOT NULL,
   schemaVersion INTEGER NOT NULL,
@@ -43,9 +44,20 @@ CREATE TABLE IF NOT EXISTS decision_reports (
   createdAt TEXT NOT NULL,
   FOREIGN KEY (userId) REFERENCES users(id) ON DELETE CASCADE
 );
+`);
 
+const decisionReportColumns = db.pragma(
+  'table_info(decision_reports)',
+) as Array<{ name: string }>;
+if (!decisionReportColumns.some((column) => column.name === 'goalId')) {
+  db.exec('ALTER TABLE decision_reports ADD COLUMN goalId TEXT');
+}
+
+db.exec(`
 CREATE INDEX IF NOT EXISTS idx_decision_reports_user_created
 ON decision_reports (userId, createdAt DESC);
+CREATE INDEX IF NOT EXISTS idx_decision_reports_goal
+ON decision_reports (userId, goalId, createdAt DESC);
 `);
 
 export default db;
