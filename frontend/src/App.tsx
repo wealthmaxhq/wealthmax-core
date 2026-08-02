@@ -62,6 +62,7 @@ export default function App() {
         <Route path="/register" element={!ready ? restoringSession : user ? <Navigate to="/reports" replace /> : <Register />} />
         <Route path="/goals" element={<RequireAuth><Goals /></RequireAuth>} />
         <Route path="/reports" element={<RequireAuth><DecisionReports /></RequireAuth>} />
+        <Route path="/reports/:reportId" element={<RequireAuth><DecisionReports /></RequireAuth>} />
       </Routes>
     </div>
   );
