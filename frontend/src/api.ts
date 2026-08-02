@@ -87,3 +87,9 @@ export function createDecisionReport(payload: unknown) {
 export function deleteDecisionReport(id: string) {
   return api.delete(`/api/v1/decision-reports/${id}`);
 }
+
+export function exportDecisionReportCsv(id: string) {
+  return api.get<Blob>(`/api/v1/decision-reports/${id}/export.csv`, {
+    responseType: 'blob',
+  });
+}

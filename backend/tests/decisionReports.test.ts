@@ -85,6 +85,18 @@ describe('Decision reports E2E', () => {
     expect(get.status).toBe(200);
     expect(get.body.report).toEqual(response.body.report);
 
+    const exportResponse = await request(app)
+      .get(`/api/v1/decision-reports/${response.body.id}/export.csv`)
+      .set('Authorization', `Bearer ${ownerToken}`);
+    expect(exportResponse.status).toBe(200);
+    expect(exportResponse.headers['content-type']).toContain('text/csv');
+    expect(exportResponse.headers['content-disposition']).toBe(
+      'attachment; filename="api-decision-report.csv"',
+    );
+    expect(exportResponse.text).toContain('Real after-tax future value');
+    expect(exportResponse.text).toContain('API decision report,INR');
+    expect(exportResponse.text).toContain(',Base case,');
+
     const otherRegistration = await request(app)
       .post('/api/auth/register')
       .send({ email: 'other@example.com', password: 'password123' });
@@ -93,6 +105,11 @@ describe('Decision reports E2E', () => {
       .get(`/api/v1/decision-reports/${response.body.id}`)
       .set('Authorization', `Bearer ${otherToken}`);
     expect(hidden.status).toBe(404);
+
+    const hiddenExport = await request(app)
+      .get(`/api/v1/decision-reports/${response.body.id}/export.csv`)
+      .set('Authorization', `Bearer ${otherToken}`);
+    expect(hiddenExport.status).toBe(404);
 
     const hiddenDelete = await request(app)
       .delete(`/api/v1/decision-reports/${response.body.id}`)

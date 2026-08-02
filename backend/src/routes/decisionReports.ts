@@ -10,6 +10,10 @@ import {
   listDecisionReports,
   storeDecisionReport,
 } from '../lib/storedDecisionReports';
+import {
+  decisionReportCsv,
+  decisionReportCsvFilename,
+} from '../lib/decisionReportCsv';
 
 const router = Router();
 router.use(authMiddleware);
@@ -40,6 +44,17 @@ router.post('/', async (req, res) => {
     }
     return res.status(503).json({ error: 'Decision report service unavailable.' });
   }
+});
+
+router.get('/:id/export.csv', (req, res) => {
+  const stored = getDecisionReport(req.params.id, userId(req));
+  if (!stored) return res.status(404).json({ error: 'Not found' });
+  res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+  res.setHeader(
+    'Content-Disposition',
+    `attachment; filename="${decisionReportCsvFilename(stored.title)}"`,
+  );
+  return res.send(decisionReportCsv(stored));
 });
 
 router.get('/:id', (req, res) => {

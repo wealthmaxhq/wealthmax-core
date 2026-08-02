@@ -4,6 +4,7 @@ import {
   createDecisionReport,
   DecisionReportSummary,
   deleteDecisionReport,
+  exportDecisionReportCsv,
   getDecisionReport,
   listDecisionReports,
   StoredDecisionReport,
@@ -137,6 +138,26 @@ export default function DecisionReports() {
       await deleteDecisionReport(id);
       if (selected?.id === id) setSelected(null);
       await refresh();
+    } catch (requestError) {
+      setError(errorMessage(requestError));
+    }
+  };
+
+  const download = async (report: StoredDecisionReport) => {
+    setError(null);
+    try {
+      const response = await exportDecisionReportCsv(report.id);
+      const disposition = response.headers['content-disposition'] as string | undefined;
+      const filename = disposition?.match(/filename="([^"]+)"/)?.[1]
+        ?? 'decision-report.csv';
+      const url = URL.createObjectURL(response.data);
+      const anchor = document.createElement('a');
+      anchor.href = url;
+      anchor.download = filename;
+      document.body.appendChild(anchor);
+      anchor.click();
+      anchor.remove();
+      URL.revokeObjectURL(url);
     } catch (requestError) {
       setError(errorMessage(requestError));
     }
@@ -316,7 +337,16 @@ export default function DecisionReports() {
             </div>
           ) : (
             <div className="result-content">
-              <p className="result-title">{selected.title}</p>
+              <div className="result-toolbar">
+                <p className="result-title">{selected.title}</p>
+                <button
+                  className="text-button"
+                  type="button"
+                  onClick={() => void download(selected)}
+                >
+                  Download CSV
+                </button>
+              </div>
               <div className="hero-metric">
                 <span>Real after-tax future value</span>
                 <strong>

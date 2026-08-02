@@ -87,6 +87,8 @@ input:focus, select:focus { border-color: #168557; box-shadow: 0 0 0 3px rgba(22
 .warnings summary { cursor: pointer; font-weight: 700; }
 .warnings li { line-height: 1.45; margin-bottom: 8px; }
 .saved-reports { margin-top: 22px; }
+.result-toolbar { align-items: center; display: flex; gap: 16px; justify-content: space-between; }
+.result-toolbar .result-title { margin: 0; }
 .report-list { display: grid; gap: 10px; }
 .report-row { align-items: center; border: 1px solid #e3e9e1; border-radius: 11px; display: flex; gap: 12px; padding: 7px 9px 7px 15px; }
 .report-open { background: none; border: 0; cursor: pointer; flex: 1; padding: 7px 0; text-align: left; }
