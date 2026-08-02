@@ -16,7 +16,11 @@ type FormState = {
   principal: string;
   loanRate: string;
   tenureMonths: string;
+  processingFee: string;
+  existingPrepayment: string;
   extraCash: string;
+  decisionInstallment: string;
+  allocationStep: string;
   downsideReturn: string;
   investmentReturn: string;
   upsideReturn: string;
@@ -32,7 +36,11 @@ const initialForm: FormState = {
   principal: '1000000',
   loanRate: '9.5',
   tenureMonths: '240',
+  processingFee: '',
+  existingPrepayment: '',
   extraCash: '100000',
+  decisionInstallment: '1',
+  allocationStep: '10',
   downsideReturn: '8',
   investmentReturn: '12',
   upsideReturn: '16',
@@ -80,12 +88,18 @@ function reportPayload(form: FormState) {
           principal: form.principal.trim(),
           annualInterestRatePercent: form.loanRate.trim(),
           tenureMonths: Number(form.tenureMonths),
+          ...(form.processingFee.trim()
+            ? { processingFee: form.processingFee.trim() }
+            : {}),
+          ...(form.existingPrepayment.trim()
+            ? { prepayment: form.existingPrepayment.trim() }
+            : {}),
         },
         extraCash: form.extraCash.trim(),
-        decisionInstallment: 1,
+        decisionInstallment: Number(form.decisionInstallment),
         grossAnnualInvestmentReturnPercent: scenario.value,
         annualExpenseRatioPercent: form.expenseRatio.trim(),
-        allocationStepPercent: 10,
+        allocationStepPercent: Number(form.allocationStep),
         objective: form.objective,
         grossAnnualReturnScenariosPercent: returnScenarios,
         investmentGainTaxRatePercent: form.taxRate.trim(),
@@ -132,6 +146,17 @@ export default function DecisionReports() {
     const upside = Number(form.upsideReturn);
     if (!(downside <= base && base <= upside)) {
       setError('Investment returns must be ordered downside, base, then upside.');
+      return;
+    }
+    if (Number(form.decisionInstallment) > Number(form.tenureMonths)) {
+      setError('Decision month must fall within the remaining loan tenure.');
+      return;
+    }
+    if (
+      form.existingPrepayment.trim()
+      && Number(form.existingPrepayment) > Number(form.principal)
+    ) {
+      setError('Starting principal reduction cannot exceed the loan principal.');
       return;
     }
     setCalculating(true);
@@ -326,6 +351,56 @@ export default function DecisionReports() {
                 onChange={(event) => update('extraCash', event.target.value)}
               />
             </label>
+            <details className="advanced-assumptions full-field">
+              <summary>Advanced loan and calculation settings</summary>
+              <p>
+                Use these when fees, an earlier principal reduction, or the
+                timing and precision of the decision materially affect the result.
+              </p>
+              <div className="advanced-grid">
+                <label>
+                  Processing fee (optional)
+                  <input
+                    inputMode="decimal"
+                    placeholder="0"
+                    value={form.processingFee}
+                    onChange={(event) => update('processingFee', event.target.value)}
+                  />
+                </label>
+                <label>
+                  Starting principal reduction (optional)
+                  <input
+                    inputMode="decimal"
+                    placeholder="0"
+                    value={form.existingPrepayment}
+                    onChange={(event) => update('existingPrepayment', event.target.value)}
+                  />
+                </label>
+                <label>
+                  Decision month
+                  <input
+                    required
+                    min="1"
+                    max={form.tenureMonths || '1200'}
+                    type="number"
+                    value={form.decisionInstallment}
+                    onChange={(event) => update('decisionInstallment', event.target.value)}
+                  />
+                </label>
+                <label>
+                  Allocation increments
+                  <select
+                    value={form.allocationStep}
+                    onChange={(event) => update('allocationStep', event.target.value)}
+                  >
+                    <option value="20">20% — quick</option>
+                    <option value="10">10% — balanced</option>
+                    <option value="5">5% — detailed</option>
+                    <option value="1">1% — maximum precision</option>
+                  </select>
+                </label>
+              </div>
+            </details>
             <label>
               Downside return (% p.a.)
               <input

@@ -143,6 +143,12 @@ describe('Decision reports E2E', () => {
     const multiScenario = structuredClone(report);
     const baseCase = multiScenario.cases[0];
     baseCase.objective = 'fastestDebtFree';
+    Object.assign(baseCase.loan, {
+      processingFee: '125',
+      prepayment: '500',
+    });
+    baseCase.decisionInstallment = 3;
+    baseCase.allocationStepPercent = 5;
     const scenarios = [
       { id: 'downside', label: 'Downside case', value: '8' },
       { id: 'base', label: 'Base case', value: '12' },
