@@ -8,6 +8,7 @@ export interface DecisionReportSummary {
   schemaVersion: number;
   sourceFormulaId: string;
   createdAt: string;
+  goalId?: string;
 }
 
 export interface StoredDecisionReport extends DecisionReportSummary {
@@ -58,23 +59,26 @@ function rowSummary(row: Record<string, unknown>): DecisionReportSummary {
     schemaVersion: row.schemaVersion as number,
     sourceFormulaId: row.sourceFormulaId as string,
     createdAt: row.createdAt as string,
+    goalId: (row.goalId as string | null) ?? undefined,
   };
 }
 
 export function storeDecisionReport(
   userId: string,
   report: unknown,
+  goalId?: string,
 ): StoredDecisionReport {
   const contract = snapshotContract(report);
   const id = randomUUID();
   const createdAt = new Date().toISOString();
   db.prepare(
     `INSERT INTO decision_reports
-      (id, userId, title, currency, schemaVersion, sourceFormulaId, snapshotJson, createdAt)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+      (id, userId, goalId, title, currency, schemaVersion, sourceFormulaId, snapshotJson, createdAt)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
   ).run(
     id,
     userId,
+    goalId ?? null,
     contract.sourceReport.title,
     contract.sourceReport.currency,
     contract.schemaVersion,
@@ -89,6 +93,7 @@ export function storeDecisionReport(
     schemaVersion: contract.schemaVersion,
     sourceFormulaId: contract.sourceReport.formulaId,
     createdAt,
+    goalId,
     report,
   };
 }
@@ -96,7 +101,7 @@ export function storeDecisionReport(
 export function listDecisionReports(userId: string): DecisionReportSummary[] {
   const rows = db
     .prepare(
-      `SELECT id, title, currency, schemaVersion, sourceFormulaId, createdAt
+      `SELECT id, goalId, title, currency, schemaVersion, sourceFormulaId, createdAt
        FROM decision_reports WHERE userId = ? ORDER BY createdAt DESC, id DESC`,
     )
     .all(userId) as Record<string, unknown>[];
@@ -109,7 +114,7 @@ export function getDecisionReport(
 ): StoredDecisionReport | undefined {
   const row = db
     .prepare(
-      `SELECT id, title, currency, schemaVersion, sourceFormulaId,
+      `SELECT id, goalId, title, currency, schemaVersion, sourceFormulaId,
               snapshotJson, createdAt
        FROM decision_reports WHERE id = ? AND userId = ?`,
     )

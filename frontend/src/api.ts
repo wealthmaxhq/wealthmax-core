@@ -36,6 +36,7 @@ export interface DecisionReportSummary {
   schemaVersion: number;
   sourceFormulaId: string;
   createdAt: string;
+  goalId?: string;
 }
 
 export interface DecisionReportSnapshot {

@@ -6,6 +6,8 @@ import {
   deleteDecisionReport,
   exportDecisionReportCsv,
   getDecisionReport,
+  Goal,
+  listGoals,
   listDecisionReports,
   StoredDecisionReport,
 } from '../api';
@@ -28,6 +30,7 @@ type FormState = {
   taxRate: string;
   inflationRate: string;
   objective: string;
+  goalId: string;
 };
 
 const initialForm: FormState = {
@@ -48,6 +51,7 @@ const initialForm: FormState = {
   taxRate: '20',
   inflationRate: '6',
   objective: 'maximumFutureValue',
+  goalId: '',
 };
 
 const objectiveLabels: Record<string, string> = {
@@ -80,6 +84,7 @@ function reportPayload(form: FormState) {
   const returnScenarios = returns.map((scenario) => scenario.value);
   return {
     title: form.title.trim(),
+    ...(form.goalId ? { goalId: form.goalId } : {}),
     cases: returns.map((scenario) => ({
         id: scenario.id,
         label: scenario.label,
@@ -112,6 +117,7 @@ export default function DecisionReports() {
   const authenticated = Boolean(localStorage.getItem('token'));
   const [form, setForm] = useState<FormState>(initialForm);
   const [reports, setReports] = useState<DecisionReportSummary[]>([]);
+  const [goals, setGoals] = useState<Goal[]>([]);
   const [selected, setSelected] = useState<StoredDecisionReport | null>(null);
   const [loading, setLoading] = useState(true);
   const [calculating, setCalculating] = useState(false);
@@ -121,8 +127,12 @@ export default function DecisionReports() {
     setLoading(true);
     setError(null);
     try {
-      const response = await listDecisionReports();
-      setReports(response.data.reports);
+      const [reportResponse, goalResponse] = await Promise.all([
+        listDecisionReports(),
+        listGoals(),
+      ]);
+      setReports(reportResponse.data.reports);
+      setGoals(goalResponse.data.goals);
     } catch (requestError) {
       setError(errorMessage(requestError));
     } finally {
@@ -223,6 +233,7 @@ export default function DecisionReports() {
 
   const selectedCase = selected?.report.cases.find((item) => item.id === 'base')
     ?? selected?.report.cases[0];
+  const goalTitle = (goalId?: string) => goals.find((goal) => goal.id === goalId)?.title;
 
   if (!authenticated) {
     return (
@@ -289,6 +300,21 @@ export default function DecisionReports() {
                 value={form.title}
                 onChange={(event) => update('title', event.target.value)}
               />
+            </label>
+            <label className="full-field">
+              Financial goal (optional)
+              <select
+                value={form.goalId}
+                onChange={(event) => update('goalId', event.target.value)}
+              >
+                <option value="">No linked goal</option>
+                {goals.map((goal) => (
+                  <option key={goal.id} value={goal.id}>{goal.title}</option>
+                ))}
+              </select>
+              <span className="field-help">
+                Link this analysis to the outcome it is intended to fund.
+              </span>
             </label>
             <label className="full-field">
               What matters most?
@@ -502,6 +528,11 @@ export default function DecisionReports() {
               <p className="objective-summary">
                 Objective: {objectiveLabels[selectedCase.objective] ?? selectedCase.objective}
               </p>
+              {selected.goalId && (
+                <p className="objective-summary">
+                  Goal: {goalTitle(selected.goalId) ?? 'Linked goal'}
+                </p>
+              )}
               <div className="hero-metric">
                 <span>Real after-tax future value</span>
                 <strong>
@@ -598,6 +629,7 @@ export default function DecisionReports() {
                   <strong>{report.title}</strong>
                   <span>
                     {report.currency} · {new Date(report.createdAt).toLocaleString()}
+                    {report.goalId && ` · ${goalTitle(report.goalId) ?? 'Linked goal'}`}
                   </span>
                 </button>
                 <button

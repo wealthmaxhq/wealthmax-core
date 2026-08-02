@@ -53,15 +53,21 @@ describe('Decision reports E2E', () => {
 
   test('returns a versioned REP-002 portable snapshot', async () => {
     const ownerToken = await token();
+    const goalResponse = await request(app)
+      .post('/api/goals')
+      .set('Authorization', `Bearer ${ownerToken}`)
+      .send({ title: 'Financial freedom', targetAmount: 100000 });
+    const goalId = goalResponse.body.goal.id as string;
     const response = await request(app)
       .post('/api/v1/decision-reports')
       .set('Authorization', `Bearer ${ownerToken}`)
-      .send(report);
+      .send({ ...report, goalId });
 
     expect(response.status).toBe(201);
     expect(response.body.apiVersion).toBe('v1');
     expect(response.body.id).toEqual(expect.any(String));
     expect(response.body.createdAt).toEqual(expect.any(String));
+    expect(response.body.goalId).toBe(goalId);
     expect(response.body.report.schemaVersion).toBe(1);
     expect(response.body.report.snapshotFormula.id).toBe('REP-002');
     expect(response.body.report.sourceReport.formulaId).toBe('REP-001');
@@ -78,6 +84,7 @@ describe('Decision reports E2E', () => {
     expect(list.body.reports).toHaveLength(1);
     expect(list.body.reports[0]).not.toHaveProperty('report');
     expect(list.body.reports[0].id).toBe(response.body.id);
+    expect(list.body.reports[0].goalId).toBe(goalId);
 
     const get = await request(app)
       .get(`/api/v1/decision-reports/${response.body.id}`)
@@ -94,13 +101,22 @@ describe('Decision reports E2E', () => {
       'attachment; filename="api-decision-report.csv"',
     );
     expect(exportResponse.text).toContain('Real after-tax future value');
-    expect(exportResponse.text).toContain('API decision report,INR');
+    expect(exportResponse.text).toContain('API decision report,');
     expect(exportResponse.text).toContain(',Base case,');
 
     const otherRegistration = await request(app)
       .post('/api/auth/register')
       .send({ email: 'other@example.com', password: 'password123' });
     const otherToken = otherRegistration.body.token as string;
+    const foreignGoal = await request(app)
+      .post('/api/goals')
+      .set('Authorization', `Bearer ${otherToken}`)
+      .send({ title: 'Private goal', targetAmount: 500 });
+    const rejectedLink = await request(app)
+      .post('/api/v1/decision-reports')
+      .set('Authorization', `Bearer ${ownerToken}`)
+      .send({ ...report, goalId: foreignGoal.body.goal.id });
+    expect(rejectedLink.status).toBe(400);
     const hidden = await request(app)
       .get(`/api/v1/decision-reports/${response.body.id}`)
       .set('Authorization', `Bearer ${otherToken}`);
@@ -115,6 +131,15 @@ describe('Decision reports E2E', () => {
       .delete(`/api/v1/decision-reports/${response.body.id}`)
       .set('Authorization', `Bearer ${otherToken}`);
     expect(hiddenDelete.status).toBe(404);
+
+    const goalDeletion = await request(app)
+      .delete(`/api/goals/${goalId}`)
+      .set('Authorization', `Bearer ${ownerToken}`);
+    expect(goalDeletion.status).toBe(204);
+    const unlinked = await request(app)
+      .get(`/api/v1/decision-reports/${response.body.id}`)
+      .set('Authorization', `Bearer ${ownerToken}`);
+    expect(unlinked.body).not.toHaveProperty('goalId');
 
     const deletion = await request(app)
       .delete(`/api/v1/decision-reports/${response.body.id}`)

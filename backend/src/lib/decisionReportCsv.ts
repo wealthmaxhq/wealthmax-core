@@ -2,6 +2,7 @@ import { StoredDecisionReport } from './storedDecisionReports';
 
 const columns = [
   'Report title',
+  'Goal ID',
   'Currency',
   'Created at',
   'Case ID',
@@ -33,6 +34,7 @@ export function decisionReportCsv(stored: StoredDecisionReport): string {
       : {};
     return [
       textCell(stored.title),
+      textCell(stored.goalId),
       textCell(stored.currency),
       cell(stored.createdAt),
       textCell(reportCase.id),
