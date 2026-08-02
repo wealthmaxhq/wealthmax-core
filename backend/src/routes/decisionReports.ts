@@ -1,12 +1,29 @@
-import { Router } from 'express';
-import { authMiddleware } from '../lib/jwt';
+import { Request, Router } from 'express';
+import { authMiddleware, AuthenticatedRequest } from '../lib/jwt';
 import {
   createDecisionReport,
   DecisionReportBridgeError,
 } from '../lib/decisionReports';
+import {
+  deleteDecisionReport,
+  getDecisionReport,
+  listDecisionReports,
+  storeDecisionReport,
+} from '../lib/storedDecisionReports';
 
 const router = Router();
 router.use(authMiddleware);
+
+function userId(req: Request): string {
+  return (req as AuthenticatedRequest).user!.id;
+}
+
+router.get('/', (req, res) => {
+  return res.json({
+    apiVersion: 'v1',
+    reports: listDecisionReports(userId(req)),
+  });
+});
 
 router.post('/', async (req, res) => {
   if (!req.body || typeof req.body !== 'object' || Array.isArray(req.body)) {
@@ -14,7 +31,8 @@ router.post('/', async (req, res) => {
   }
   try {
     const report = await createDecisionReport(req.body);
-    return res.status(201).json({ apiVersion: 'v1', report });
+    const stored = storeDecisionReport(userId(req), report);
+    return res.status(201).json({ apiVersion: 'v1', ...stored });
   } catch (error) {
     if (error instanceof DecisionReportBridgeError) {
       const status = error.kind === 'invalid_request' ? 400 : 503;
@@ -22,6 +40,19 @@ router.post('/', async (req, res) => {
     }
     return res.status(503).json({ error: 'Decision report service unavailable.' });
   }
+});
+
+router.get('/:id', (req, res) => {
+  const stored = getDecisionReport(req.params.id, userId(req));
+  if (!stored) return res.status(404).json({ error: 'Not found' });
+  return res.json({ apiVersion: 'v1', ...stored });
+});
+
+router.delete('/:id', (req, res) => {
+  if (!deleteDecisionReport(req.params.id, userId(req))) {
+    return res.status(404).json({ error: 'Not found' });
+  }
+  return res.status(204).send();
 });
 
 export default router;
