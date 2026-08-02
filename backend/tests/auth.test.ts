@@ -66,4 +66,48 @@ describe('Auth E2E', () => {
     });
     expect(invalidEmail.status).toBe(400);
   }, 20_000);
+
+  test('updates profile and changes password securely', async () => {
+    const email = 'account@example.com';
+    const password = 'original-password';
+    const registration = await request(app).post('/api/auth/register').send({ email, password });
+    const authorization = `Bearer ${registration.body.token}`;
+
+    const updated = await request(app).patch('/api/auth/me')
+      .set('Authorization', authorization).send({ name: '  Account Owner  ' });
+    expect(updated.status).toBe(200);
+    expect(updated.body.user).toEqual(expect.objectContaining({ email, name: 'Account Owner' }));
+    expect(updated.body.user.passwordHash).toBeUndefined();
+
+    const cleared = await request(app).patch('/api/auth/me')
+      .set('Authorization', authorization).send({ name: '' });
+    expect(cleared.status).toBe(200);
+    expect(cleared.body.user.name).toBeUndefined();
+
+    const missingName = await request(app).patch('/api/auth/me')
+      .set('Authorization', authorization).send({ email: 'changed@example.com' });
+    expect(missingName.status).toBe(400);
+
+    const wrongCurrent = await request(app).post('/api/auth/change-password')
+      .set('Authorization', authorization)
+      .send({ currentPassword: 'wrong-password', newPassword: 'replacement-password' });
+    expect(wrongCurrent.status).toBe(400);
+
+    const weakNew = await request(app).post('/api/auth/change-password')
+      .set('Authorization', authorization)
+      .send({ currentPassword: password, newPassword: 'short' });
+    expect(weakNew.status).toBe(400);
+
+    const changed = await request(app).post('/api/auth/change-password')
+      .set('Authorization', authorization)
+      .send({ currentPassword: password, newPassword: 'replacement-password' });
+    expect(changed.status).toBe(204);
+
+    const oldLogin = await request(app).post('/api/auth/login').send({ email, password });
+    expect(oldLogin.status).toBe(400);
+    const newLogin = await request(app).post('/api/auth/login').send({
+      email, password: 'replacement-password',
+    });
+    expect(newLogin.status).toBe(200);
+  }, 30_000);
 });

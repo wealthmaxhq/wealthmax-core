@@ -10,6 +10,11 @@ interface.
 `JWT_SECRET` is mandatory and must contain at least 32 characters. Tokens expire
 after one hour and are restricted to the WealthMax issuer and web audience.
 
+- `GET /api/auth/me` returns the authenticated user's public profile.
+- `PATCH /api/auth/me` updates or clears the authenticated user's display name.
+- `POST /api/auth/change-password` verifies the current password before storing
+  a newly hashed replacement.
+
 ## Decision report API
 
 `POST /api/v1/decision-reports` runs the Dart financial engine and returns a
