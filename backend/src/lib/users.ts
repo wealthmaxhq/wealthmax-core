@@ -22,9 +22,17 @@ export function findUserById(id: string): User | undefined {
 }
 
 export function createUser(email: string, passwordHash: string, name?: string): User {
+  const storedEmail = email.trim().toLowerCase();
+  const storedName = name?.trim() || undefined;
   const id = randomUUID();
   const now = new Date().toISOString();
   const stmt = db.prepare('INSERT INTO users (id, email, passwordHash, name, createdAt) VALUES (?, ?, ?, ?, ?)');
-  stmt.run(id, email, passwordHash, name, now);
-  return { id, email, passwordHash, name, createdAt: now } as User;
+  stmt.run(id, storedEmail, passwordHash, storedName, now);
+  return {
+    id,
+    email: storedEmail,
+    passwordHash,
+    name: storedName,
+    createdAt: now,
+  } as User;
 }
