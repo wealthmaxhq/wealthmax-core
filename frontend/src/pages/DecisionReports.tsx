@@ -1,5 +1,5 @@
 import { FormEvent, useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import {
   createDecisionReport,
   DecisionReportSummary,
@@ -115,6 +115,9 @@ function reportPayload(form: FormState) {
 
 export default function DecisionReports() {
   const authenticated = Boolean(localStorage.getItem('token'));
+  const navigate = useNavigate();
+  const { reportId } = useParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [form, setForm] = useState<FormState>(initialForm);
   const [reports, setReports] = useState<DecisionReportSummary[]>([]);
   const [goals, setGoals] = useState<Goal[]>([]);
@@ -145,6 +148,18 @@ export default function DecisionReports() {
     else setLoading(false);
   }, [authenticated]);
 
+  useEffect(() => {
+    if (!authenticated) return;
+    if (!reportId) {
+      setSelected(null);
+      return;
+    }
+    setError(null);
+    getDecisionReport(reportId)
+      .then((response) => setSelected(response.data))
+      .catch((requestError) => setError(errorMessage(requestError)));
+  }, [authenticated, reportId]);
+
   const update = (field: keyof FormState, value: string) => {
     setForm((current) => ({ ...current, [field]: value }));
   };
@@ -174,6 +189,7 @@ export default function DecisionReports() {
     try {
       const response = await createDecisionReport(reportPayload(form));
       setSelected(response.data);
+      navigate(`/reports/${response.data.id}`, { replace: true });
       await refresh();
     } catch (requestError) {
       setError(errorMessage(requestError));
@@ -182,14 +198,9 @@ export default function DecisionReports() {
     }
   };
 
-  const open = async (id: string) => {
-    setError(null);
-    try {
-      const response = await getDecisionReport(id);
-      setSelected(response.data);
-    } catch (requestError) {
-      setError(errorMessage(requestError));
-    }
+  const open = (id: string) => {
+    const query = searchParams.toString();
+    navigate(`/reports/${id}${query ? `?${query}` : ''}`);
   };
 
   const remove = async (id: string) => {
@@ -197,7 +208,7 @@ export default function DecisionReports() {
     setError(null);
     try {
       await deleteDecisionReport(id);
-      if (selected?.id === id) setSelected(null);
+      if (selected?.id === id) navigate('/reports', { replace: true });
       await refresh();
     } catch (requestError) {
       setError(errorMessage(requestError));
@@ -234,6 +245,10 @@ export default function DecisionReports() {
   const selectedCase = selected?.report.cases.find((item) => item.id === 'base')
     ?? selected?.report.cases[0];
   const goalTitle = (goalId?: string) => goals.find((goal) => goal.id === goalId)?.title;
+  const libraryGoalId = searchParams.get('goalId') ?? '';
+  const visibleReports = libraryGoalId
+    ? reports.filter((report) => report.goalId === libraryGoalId)
+    : reports;
 
   if (!authenticated) {
     return (
@@ -617,15 +632,28 @@ export default function DecisionReports() {
             Refresh
           </button>
         </div>
+        <label className="library-filter">
+          Filter by goal
+          <select
+            value={libraryGoalId}
+            onChange={(event) => {
+              const value = event.target.value;
+              setSearchParams(value ? { goalId: value } : {});
+            }}
+          >
+            <option value="">All reports</option>
+            {goals.map((goal) => <option key={goal.id} value={goal.id}>{goal.title}</option>)}
+          </select>
+        </label>
         {loading ? (
           <p className="muted">Loading reports…</p>
-        ) : reports.length === 0 ? (
-          <p className="muted">No reports yet. Your first calculation will be saved here.</p>
+        ) : visibleReports.length === 0 ? (
+          <p className="muted">{libraryGoalId ? 'No reports are linked to this goal yet.' : 'No reports yet. Your first calculation will be saved here.'}</p>
         ) : (
           <div className="report-list">
-            {reports.map((report) => (
+            {visibleReports.map((report) => (
               <article key={report.id} className="report-row">
-                <button className="report-open" onClick={() => void open(report.id)}>
+                <button className="report-open" onClick={() => open(report.id)}>
                   <strong>{report.title}</strong>
                   <span>
                     {report.currency} · {new Date(report.createdAt).toLocaleString()}

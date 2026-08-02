@@ -83,7 +83,7 @@ export default function Dashboard() {
               <div className="section-heading"><div><p className="step">Recent analysis</p><h2>Decision reports</h2></div><Link className="text-link" to="/reports">View all</Link></div>
               {reports.length === 0 ? <div className="dashboard-empty"><p>No reports yet.</p><Link to="/reports">Compare loan and investment paths</Link></div> : (
                 <div className="dashboard-reports">
-                  {reports.slice(0, 4).map((report) => <Link to="/reports" key={report.id}><div><strong>{report.title}</strong><span>{new Date(report.createdAt).toLocaleDateString()}</span></div><small>{report.currency}{report.goalId ? ` · ${goalName(report.goalId) ?? 'Linked goal'}` : ' · No linked goal'}</small></Link>)}
+                  {reports.slice(0, 4).map((report) => <Link to={`/reports/${report.id}`} key={report.id}><div><strong>{report.title}</strong><span>{new Date(report.createdAt).toLocaleDateString()}</span></div><small>{report.currency}{report.goalId ? ` · ${goalName(report.goalId) ?? 'Linked goal'}` : ' · No linked goal'}</small></Link>)}
                 </div>
               )}
             </section>

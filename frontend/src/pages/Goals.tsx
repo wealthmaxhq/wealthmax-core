@@ -1,4 +1,5 @@
 import { FormEvent, useEffect, useMemo, useState } from 'react';
+import { Link } from 'react-router-dom';
 import {
   createGoal,
   deleteGoal,
@@ -158,7 +159,7 @@ export default function Goals() {
                 <div className="progress-track"><span style={{ width: `${progress}%` }} /></div>
                 <p className="goal-amount"><strong>{goal.currentAmount.toLocaleString()}</strong> of {goal.targetAmount.toLocaleString()}</p>
                 {goal.notes && <p className="goal-notes">{goal.notes}</p>}
-                <div className="goal-actions"><button className="text-button" onClick={() => { setEditingId(goal.id); setForm(formFor(goal)); }}>Edit</button><button className="danger-button" onClick={() => void remove(goal)}>Delete</button></div>
+                <div className="goal-actions"><Link className="text-link" to={`/reports?goalId=${goal.id}`}>Reports</Link><button className="text-button" onClick={() => { setEditingId(goal.id); setForm(formFor(goal)); }}>Edit</button><button className="danger-button" onClick={() => void remove(goal)}>Delete</button></div>
               </article>
             );
           })}
