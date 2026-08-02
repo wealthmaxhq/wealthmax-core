@@ -163,6 +163,13 @@ export default function DecisionReports() {
     }
   };
 
+  const printReport = (report: StoredDecisionReport) => {
+    const previousTitle = document.title;
+    document.title = `${report.title} - WealthMax`;
+    window.print();
+    document.title = previousTitle;
+  };
+
   const selectedCase = selected?.report.cases[0];
 
   if (!authenticated) {
@@ -339,14 +346,27 @@ export default function DecisionReports() {
             <div className="result-content">
               <div className="result-toolbar">
                 <p className="result-title">{selected.title}</p>
-                <button
-                  className="text-button"
-                  type="button"
-                  onClick={() => void download(selected)}
-                >
-                  Download CSV
-                </button>
+                <div className="result-actions">
+                  <button
+                    className="text-button"
+                    type="button"
+                    onClick={() => printReport(selected)}
+                  >
+                    Print / Save PDF
+                  </button>
+                  <button
+                    className="text-button"
+                    type="button"
+                    onClick={() => void download(selected)}
+                  >
+                    Download CSV
+                  </button>
+                </div>
               </div>
+              <p className="print-metadata">
+                Generated {new Date(selected.createdAt).toLocaleString()} ·{' '}
+                {selected.sourceFormulaId} · Schema {selected.schemaVersion}
+              </p>
               <div className="hero-metric">
                 <span>Real after-tax future value</span>
                 <strong>
