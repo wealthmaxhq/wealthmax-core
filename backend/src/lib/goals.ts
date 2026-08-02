@@ -14,7 +14,7 @@ export interface Goal {
 }
 
 export function listGoalsByUser(userId: string): Goal[] {
-  const rows = db.prepare('SELECT id, userId, title, targetAmount, currentAmount, targetDate, notes, createdAt, updatedAt FROM goals WHERE userId = ?').all(userId);
+  const rows = db.prepare('SELECT id, userId, title, targetAmount, currentAmount, targetDate, notes, createdAt, updatedAt FROM goals WHERE userId = ? ORDER BY createdAt DESC, id DESC').all(userId);
   return rows.map((r: any) => ({
     id: r.id,
     userId: r.userId,
@@ -65,7 +65,15 @@ export function createGoal(userId: string, data: Partial<Goal>): Goal {
 export function updateGoal(id: string, userId: string, patch: Partial<Goal>): Goal | undefined {
   const existing = getGoalById(id);
   if (!existing || existing.userId !== userId) return undefined;
-  const updated = { ...existing, ...patch, updatedAt: new Date().toISOString() } as Goal;
+  const updated: Goal = {
+    ...existing,
+    title: patch.title ?? existing.title,
+    targetAmount: patch.targetAmount ?? existing.targetAmount,
+    currentAmount: patch.currentAmount ?? existing.currentAmount,
+    targetDate: patch.targetDate ?? existing.targetDate,
+    notes: patch.notes ?? existing.notes,
+    updatedAt: new Date().toISOString(),
+  };
   const stmt = db.prepare('UPDATE goals SET title = ?, targetAmount = ?, currentAmount = ?, targetDate = ?, notes = ?, updatedAt = ? WHERE id = ? AND userId = ?');
   stmt.run(updated.title, updated.targetAmount, updated.currentAmount, updated.targetDate || null, updated.notes || null, updated.updatedAt, id, userId);
   return updated;
