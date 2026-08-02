@@ -62,6 +62,8 @@ and item endpoints never expose another user's reports:
 
 - `GET /api/v1/decision-reports` lists report metadata without large snapshots.
 - `GET /api/v1/decision-reports/:id` returns one stored snapshot.
+- `GET /api/v1/decision-reports/:id/export.csv` downloads an Excel-compatible
+  UTF-8 CSV containing the report's case-level decision results.
 - `DELETE /api/v1/decision-reports/:id` permanently deletes an owned report.
 
 Invalid report inputs return HTTP 400. An unavailable or timed-out calculation
