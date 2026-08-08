@@ -1,0 +1,118 @@
+name: Full-stack CI
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  dart:
+    name: Dart financial SDK
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v5
+
+      - name: Set up Dart
+        uses: dart-lang/setup-dart@v1
+        with:
+          sdk: 3.12.2
+
+      - name: Cache Dart packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.pub-cache
+          key: ${{ runner.os }}-dart-${{ hashFiles('pubspec.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-dart-
+
+      - name: Install Dart dependencies
+        run: dart pub get
+
+      - name: Check Dart formatting
+        run: dart format --output=none --set-exit-if-changed lib test bin
+
+      - name: Analyze Dart code
+        run: dart analyze --fatal-infos
+
+      - name: Run Dart tests
+        run: dart test
+
+  backend:
+    name: Backend API
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      NODE_ENV: test
+      JWT_SECRET: ci-only-jwt-secret-not-for-production-1234567890
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v5
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v4.4.0
+        with:
+          version: 11
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Set up Dart for decision reports
+        uses: dart-lang/setup-dart@v1
+        with:
+          sdk: 3.12.2
+
+      - name: Install workspace dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Install Dart dependencies
+        run: dart pub get
+
+      - name: Type-check backend
+        run: pnpm --filter wealth-planner-backend run typecheck
+
+      - name: Build backend
+        run: pnpm --filter wealth-planner-backend run build
+
+      - name: Test backend
+        run: pnpm --filter wealth-planner-backend test
+
+  frontend:
+    name: Frontend web app
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v5
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v4.4.0
+        with:
+          version: 11
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install workspace dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Type-check frontend
+        run: pnpm --filter wealth-planner-frontend run typecheck
+
+      - name: Build frontend
+        run: pnpm --filter wealth-planner-frontend run build
