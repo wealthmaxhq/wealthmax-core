@@ -28,7 +28,7 @@ jobs:
           sdk: 3.12.2
 
       - name: Cache Dart packages
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: ~/.pub-cache
           key: ${{ runner.os }}-dart-${{ hashFiles('pubspec.yaml') }}
