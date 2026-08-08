@@ -1,5 +1,17 @@
 # WealthMax backend
 
+## API contract
+
+The server exposes its OpenAPI 3.1 contract at `GET /openapi.json`. The contract
+documents all health, authentication, account, goal, and decision-report
+operations, including bearer authentication, request constraints, response
+codes, and CSV export content.
+
+Start the backend and open `http://localhost:3000/openapi.json`, or import that
+URL into an OpenAPI-compatible client or documentation viewer. The contract is
+kept dependency-free and is covered by an integration test that checks route
+coverage and unique operation identifiers.
+
 ## Authentication
 
 Email addresses are trimmed, normalized to lowercase, and validated by the
