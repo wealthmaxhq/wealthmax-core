@@ -27,6 +27,14 @@ after one hour and are restricted to the WealthMax issuer and web audience.
 - `POST /api/auth/change-password` verifies the current password before storing
   a newly hashed replacement.
 
+## Financial health API
+
+`POST /api/v1/financial-health-score` calculates the authenticated user's
+transparent 0–100 score without storing the supplied financial data. Monetary
+inputs are decimal strings and share one declared `currency` (`INR`, `USD`, or
+`EUR`). The response contains the overall rating, three component scores,
+underlying ratios, and ordered actionable findings.
+
 ## Decision report API
 
 `POST /api/v1/decision-reports` runs the Dart financial engine and returns a

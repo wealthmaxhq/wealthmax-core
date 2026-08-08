@@ -21,6 +21,7 @@ export const openApiDocument = {
     { name: 'Authentication' },
     { name: 'Goals' },
     { name: 'Decision reports' },
+    { name: 'Financial health' },
   ],
   paths: {
     '/openapi.json': {
@@ -126,6 +127,14 @@ export const openApiDocument = {
         responses: { 201: { description: 'Report calculated and stored', content: json }, 400: errorResponses[400], 401: errorResponses[401], 503: { description: 'Calculation engine unavailable', content: json } },
       },
     },
+    '/api/v1/financial-health-score': {
+      post: {
+        tags: ['Financial health'], summary: 'Calculate a financial health score', operationId: 'calculateFinancialHealthScore', security: bearerSecurity,
+        description: 'All monetary values are decimal strings in the declared currency.',
+        requestBody: { required: true, content: { 'application/json': { schema: { $ref: '#/components/schemas/FinancialHealthScoreInput' } } } },
+        responses: { 200: { description: 'Transparent 0-100 score and findings', content: json }, 400: errorResponses[400], 401: errorResponses[401], 503: { description: 'Calculation engine unavailable', content: json } },
+      },
+    },
     '/api/v1/decision-reports/{id}': {
       parameters: [{ $ref: '#/components/parameters/ResourceId' }],
       get: {
@@ -186,6 +195,17 @@ export const openApiDocument = {
       DecisionReportInput: {
         type: 'object', required: ['title', 'cases'],
         properties: { title: { type: 'string' }, goalId: { type: 'string', format: 'uuid' }, cases: { type: 'array', minItems: 1, items: { type: 'object', additionalProperties: true } } },
+      },
+      FinancialHealthScoreInput: {
+        type: 'object', required: ['currency', 'liquidSavings', 'monthlyNetIncome', 'monthlyEssentialExpenses', 'monthlyDebtPayments', 'monthlySavings'], additionalProperties: false,
+        properties: {
+          currency: { type: 'string', enum: ['INR', 'USD', 'EUR'] },
+          liquidSavings: { type: 'string', pattern: '^-?[0-9]+(?:\\.[0-9]+)?$' },
+          monthlyNetIncome: { type: 'string', pattern: '^-?[0-9]+(?:\\.[0-9]+)?$' },
+          monthlyEssentialExpenses: { type: 'string', pattern: '^-?[0-9]+(?:\\.[0-9]+)?$' },
+          monthlyDebtPayments: { type: 'string', pattern: '^-?[0-9]+(?:\\.[0-9]+)?$' },
+          monthlySavings: { type: 'string', pattern: '^-?[0-9]+(?:\\.[0-9]+)?$' },
+        },
       },
     },
   },

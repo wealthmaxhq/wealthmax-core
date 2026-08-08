@@ -11,9 +11,9 @@ describe('OpenAPI contract', () => {
     const operations = Object.values(response.body.paths)
       .flatMap((path: any) => Object.entries(path))
       .filter(([method]) => ['get', 'post', 'put', 'patch', 'delete'].includes(method));
-    expect(operations).toHaveLength(18);
+    expect(operations).toHaveLength(19);
     expect(new Set(operations.map(([, operation]: any) => operation.operationId)).size)
-      .toBe(18);
+      .toBe(19);
 
     expect(response.body.paths['/api/auth/register'].post.security).toBeUndefined();
     expect(response.body.paths['/api/goals'].get.security).toEqual([{ bearerAuth: [] }]);
