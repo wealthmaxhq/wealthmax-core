@@ -70,6 +70,32 @@ export interface StoredDecisionReport extends DecisionReportSummary {
   report: DecisionReportSnapshot;
 }
 
+export interface FinancialHealthInput {
+  currency: 'INR' | 'USD' | 'EUR';
+  liquidSavings: string;
+  monthlyNetIncome: string;
+  monthlyEssentialExpenses: string;
+  monthlyDebtPayments: string;
+  monthlySavings: string;
+}
+
+export interface FinancialHealthResult {
+  apiVersion: 'v1';
+  score: number;
+  rating: 'needsAttention' | 'fair' | 'good' | 'excellent';
+  componentScores: {
+    emergencyFund: number;
+    debtBurden: number;
+    savingsRate: number;
+  };
+  metrics: {
+    emergencyFundMonths: string;
+    debtToIncomePercent: string;
+    savingsRatePercent: string;
+  };
+  findings: Array<'buildEmergencyFund' | 'reduceDebtBurden' | 'increaseSavingsRate'>;
+}
+
 const savedToken = localStorage.getItem('token');
 if (savedToken) setAuthToken(savedToken);
 
@@ -148,6 +174,10 @@ export function exportDecisionReportCsv(id: string) {
   return api.get<Blob>(`/api/v1/decision-reports/${id}/export.csv`, {
     responseType: 'blob',
   });
+}
+
+export function calculateFinancialHealth(payload: FinancialHealthInput) {
+  return api.post<FinancialHealthResult>('/api/v1/financial-health-score', payload);
 }
 
 api.interceptors.response.use(
