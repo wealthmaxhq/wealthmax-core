@@ -5,20 +5,21 @@ export interface User {
   id: string;
   email: string;
   passwordHash: string;
+  sessionVersion: number;
   name?: string;
   createdAt: string;
 }
 
 export function findUserByEmail(email: string): User | undefined {
-  const row = db.prepare('SELECT id, email, passwordHash, name, createdAt FROM users WHERE lower(email)=lower(?)').get(email);
+  const row = db.prepare('SELECT id, email, passwordHash, sessionVersion, name, createdAt FROM users WHERE lower(email)=lower(?)').get(email);
   if (!row) return undefined;
-  return { id: row.id, email: row.email, passwordHash: row.passwordHash, name: row.name ?? undefined, createdAt: row.createdAt } as User;
+  return { id: row.id, email: row.email, passwordHash: row.passwordHash, sessionVersion: row.sessionVersion, name: row.name ?? undefined, createdAt: row.createdAt } as User;
 }
 
 export function findUserById(id: string): User | undefined {
-  const row = db.prepare('SELECT id, email, passwordHash, name, createdAt FROM users WHERE id = ?').get(id);
+  const row = db.prepare('SELECT id, email, passwordHash, sessionVersion, name, createdAt FROM users WHERE id = ?').get(id);
   if (!row) return undefined;
-  return { id: row.id, email: row.email, passwordHash: row.passwordHash, name: row.name ?? undefined, createdAt: row.createdAt } as User;
+  return { id: row.id, email: row.email, passwordHash: row.passwordHash, sessionVersion: row.sessionVersion, name: row.name ?? undefined, createdAt: row.createdAt } as User;
 }
 
 export function createUser(email: string, passwordHash: string, name?: string): User {
@@ -32,6 +33,7 @@ export function createUser(email: string, passwordHash: string, name?: string): 
     id,
     email: storedEmail,
     passwordHash,
+    sessionVersion: 0,
     name: storedName,
     createdAt: now,
   } as User;
@@ -43,9 +45,14 @@ export function updateUserName(id: string, name?: string): User | undefined {
   return result.changes === 0 ? undefined : findUserById(id);
 }
 
-export function updateUserPassword(id: string, passwordHash: string): boolean {
-  const result = db.prepare('UPDATE users SET passwordHash = ? WHERE id = ?').run(passwordHash, id);
-  return result.changes > 0;
+export function updateUserPasswordAndRevokeSessions(
+  id: string,
+  passwordHash: string,
+): User | undefined {
+  const result = db.prepare(`UPDATE users
+    SET passwordHash = ?, sessionVersion = sessionVersion + 1
+    WHERE id = ?`).run(passwordHash, id);
+  return result.changes === 0 ? undefined : findUserById(id);
 }
 
 export function deleteUserAndOwnedData(id: string): boolean {

@@ -35,8 +35,10 @@ running multiple backend replicas so every instance enforces one global quota.
 - `DELETE /api/auth/me` requires the current password and the exact confirmation
   value `DELETE`, then permanently removes the account, goals, and reports in
   one transaction.
-- `POST /api/auth/change-password` verifies the current password before storing
-  a newly hashed replacement.
+- `POST /api/auth/change-password` verifies the current password, stores a newly
+  hashed replacement, revokes every existing token, and returns one replacement
+  token for the current client. Deploying this migration also invalidates tokens
+  issued before session versioning was introduced.
 
 ## Financial health API
 

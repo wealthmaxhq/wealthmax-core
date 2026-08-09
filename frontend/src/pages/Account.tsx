@@ -11,7 +11,7 @@ function errorMessage(error: unknown): string {
 }
 
 export default function Account() {
-  const { user, updateUser, logout } = useAuth();
+  const { user, establishSession, updateUser, logout } = useAuth();
   const [name, setName] = useState(user?.name ?? '');
   const [profileStatus, setProfileStatus] = useState('');
   const [profileError, setProfileError] = useState('');
@@ -54,7 +54,8 @@ export default function Account() {
     }
     setSavingPassword(true);
     try {
-      await changePassword({ currentPassword, newPassword });
+      const response = await changePassword({ currentPassword, newPassword });
+      establishSession(response.data.token, response.data.user);
       setCurrentPassword('');
       setNewPassword('');
       setConfirmPassword('');
@@ -98,7 +99,7 @@ export default function Account() {
         </section>
         <section className="panel account-card">
           <h2>Change password</h2>
-          <p className="muted">Use at least 8 characters. Your existing sessions expire automatically within one hour.</p>
+          <p className="muted">Use at least 8 characters. Changing your password signs out every other session.</p>
           {passwordError && <div className="alert">{passwordError}</div>}
           {passwordStatus && <div className="success-alert">{passwordStatus}</div>}
           <form className="auth-form" onSubmit={savePassword}>
