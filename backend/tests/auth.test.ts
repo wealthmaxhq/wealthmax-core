@@ -1,8 +1,10 @@
 import request from 'supertest';
 import app from '../src/app';
 import db from '../src/db';
+import { resetAuthRateLimits } from '../src/lib/authRateLimits';
 
-beforeEach(() => {
+beforeEach(async () => {
+  await resetAuthRateLimits();
   db.prepare('DELETE FROM goals').run();
   db.prepare('DELETE FROM users').run();
 });
@@ -110,4 +112,62 @@ describe('Auth E2E', () => {
     });
     expect(newLogin.status).toBe(200);
   }, 30_000);
+
+  test('limits repeated login failures per normalized account', async () => {
+    await request(app).post('/api/auth/register').send({
+      email: 'protected@example.com',
+      password: 'correct-password',
+    });
+
+    const successful = await request(app).post('/api/auth/login').send({
+      email: 'protected@example.com',
+      password: 'correct-password',
+    });
+    expect(successful.status).toBe(200);
+
+    for (let attempt = 0; attempt < 10; attempt += 1) {
+      const failure = await request(app).post('/api/auth/login').send({
+        email: attempt % 2 === 0
+          ? ' PROTECTED@example.com '
+          : 'protected@example.com',
+        password: 'wrong-password',
+      });
+      expect(failure.status).toBe(400);
+    }
+
+    const limited = await request(app).post('/api/auth/login').send({
+      email: 'protected@example.com',
+      password: 'wrong-password',
+    });
+    expect(limited.status).toBe(429);
+    expect(limited.body).toEqual({
+      error: 'Too many authentication attempts. Please try again later.',
+    });
+    expect(limited.headers['retry-after']).toEqual(expect.any(String));
+    expect(limited.headers['ratelimit']).toEqual(expect.any(String));
+    expect(limited.headers['x-ratelimit-limit']).toBeUndefined();
+
+    const unrelated = await request(app).post('/api/auth/login').send({
+      email: 'someone-else@example.com',
+      password: 'wrong-password',
+    });
+    expect(unrelated.status).toBe(400);
+  }, 30_000);
+
+  test('limits repeated registrations per client', async () => {
+    for (let attempt = 0; attempt < 10; attempt += 1) {
+      const registration = await request(app).post('/api/auth/register').send({
+        email: `registration-${attempt}@example.com`,
+        password: 'password123',
+      });
+      expect(registration.status).toBe(200);
+    }
+
+    const limited = await request(app).post('/api/auth/register').send({
+      email: 'registration-limited@example.com',
+      password: 'password123',
+    });
+    expect(limited.status).toBe(429);
+    expect(limited.headers['retry-after']).toEqual(expect.any(String));
+  }, 60_000);
 });

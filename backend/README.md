@@ -22,6 +22,14 @@ interface.
 `JWT_SECRET` is mandatory and must contain at least 32 characters. Tokens expire
 after one hour and are restricted to the WealthMax issuer and web audience.
 
+Public authentication endpoints reject excessive traffic with HTTP 429 and
+standard `RateLimit` and `Retry-After` headers. Registration allows 10 attempts
+per client per hour. Login allows 30 failed attempts per client and 10 failed
+attempts per normalized account identifier per 15 minutes; successful logins do
+not consume the failure quota. The default in-memory counters are appropriate
+for one backend process. Configure a shared `express-rate-limit` store before
+running multiple backend replicas so every instance enforces one global quota.
+
 - `GET /api/auth/me` returns the authenticated user's public profile.
 - `PATCH /api/auth/me` updates or clears the authenticated user's display name.
 - `POST /api/auth/change-password` verifies the current password before storing

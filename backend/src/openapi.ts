@@ -4,6 +4,7 @@ const errorResponses = {
   400: { description: 'Invalid request', content: json },
   401: { description: 'Missing or invalid bearer token', content: json },
   404: { description: 'Resource not found', content: json },
+  429: { description: 'Authentication rate limit exceeded', content: json },
 };
 
 const bearerSecurity = [{ bearerAuth: [] }];
@@ -52,6 +53,7 @@ export const openApiDocument = {
         responses: {
           200: { description: 'Account created', content: { 'application/json': { schema: { $ref: '#/components/schemas/AuthResponse' } } } },
           400: errorResponses[400],
+          429: errorResponses[429],
         },
       },
     },
@@ -67,6 +69,7 @@ export const openApiDocument = {
         responses: {
           200: { description: 'Authenticated', content: { 'application/json': { schema: { $ref: '#/components/schemas/AuthResponse' } } } },
           400: errorResponses[400],
+          429: errorResponses[429],
         },
       },
     },
