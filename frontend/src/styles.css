@@ -145,6 +145,11 @@ textarea { resize: vertical; }
 .account-card h2 { margin-bottom: 8px; }
 .account-card .alert, .account-card .success-alert { margin: 20px 0 0; }
 .account-card input:disabled { background: #f2f4f2; color: #77847b; cursor: not-allowed; }
+.danger-zone { border-color: #e4c4c4; grid-column: 1 / -1; }
+.danger-zone h2 { color: #8c2f2f; }
+.destructive-button { background: #a43d3d; border: 0; border-radius: 10px; color: white; cursor: pointer; font-weight: 750; padding: 13px 18px; }
+.destructive-button:hover { background: #842f2f; }
+.destructive-button:disabled { cursor: not-allowed; opacity: 0.55; }
 .success-alert { background: #eaf7ef; border: 1px solid #b9e2c9; border-radius: 10px; color: #126c46; margin-bottom: 20px; padding: 12px 14px; }
 .dashboard-header { align-items: end; display: flex; gap: 24px; justify-content: space-between; margin-bottom: 30px; }
 .dashboard-header .inline-button { flex: none; margin: 0; }

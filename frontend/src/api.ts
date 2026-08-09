@@ -98,6 +98,10 @@ export function changePassword(data: { currentPassword: string; newPassword: str
   return api.post<void>('/api/auth/change-password', data);
 }
 
+export function deleteCurrentUser(password: string, confirmation: string) {
+  return api.delete<void>('/api/auth/me', { data: { password, confirmation } });
+}
+
 export function listGoals() {
   return api.get<{ goals: Goal[] }>('/api/goals');
 }

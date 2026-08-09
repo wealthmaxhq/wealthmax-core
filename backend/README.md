@@ -24,6 +24,9 @@ after one hour and are restricted to the WealthMax issuer and web audience.
 
 - `GET /api/auth/me` returns the authenticated user's public profile.
 - `PATCH /api/auth/me` updates or clears the authenticated user's display name.
+- `DELETE /api/auth/me` requires the current password and the exact confirmation
+  value `DELETE`, then permanently removes the account, goals, and reports in
+  one transaction.
 - `POST /api/auth/change-password` verifies the current password before storing
   a newly hashed replacement.
 
