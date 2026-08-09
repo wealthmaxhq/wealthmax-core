@@ -13,10 +13,16 @@ CREATE TABLE IF NOT EXISTS users (
   id TEXT PRIMARY KEY,
   email TEXT UNIQUE NOT NULL,
   passwordHash TEXT NOT NULL,
+  sessionVersion INTEGER NOT NULL DEFAULT 0,
   name TEXT,
   createdAt TEXT NOT NULL
 );
 `);
+
+const userColumns = db.pragma('table_info(users)') as Array<{ name: string }>;
+if (!userColumns.some((column) => column.name === 'sessionVersion')) {
+  db.exec('ALTER TABLE users ADD COLUMN sessionVersion INTEGER NOT NULL DEFAULT 0');
+}
 
 // Goals table
 db.exec(`

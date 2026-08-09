@@ -22,8 +22,8 @@ function jwtSecret(): string {
   return secret;
 }
 
-export function signToken(payload: object): string {
-  return jwt.sign(payload, jwtSecret(), {
+export function signToken(user: { id: string; sessionVersion: number }): string {
+  return jwt.sign({ id: user.id, sessionVersion: user.sessionVersion }, jwtSecret(), {
     expiresIn: '1h',
     issuer: 'wealthmax-core',
     audience: 'wealthmax-web',
@@ -56,12 +56,19 @@ export function authMiddleware(
   }
   try {
     const payload = verifyToken(parts[1]);
-    if (typeof payload.id !== 'string' || payload.id.length === 0) {
+    if (
+      typeof payload.id !== 'string'
+      || payload.id.length === 0
+      || !Number.isInteger(payload.sessionVersion)
+    ) {
       return res.status(401).json({ error: 'Invalid token payload' });
     }
     const user = findUserById(payload.id);
     if (!user) {
       return res.status(401).json({ error: 'User not found' });
+    }
+    if (payload.sessionVersion !== user.sessionVersion) {
+      return res.status(401).json({ error: 'Session has been revoked' });
     }
     req.user = { id: user.id, email: user.email, name: user.name };
     next();

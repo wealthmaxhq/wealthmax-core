@@ -6,7 +6,7 @@ import {
   findUserByEmail,
   findUserById,
   updateUserName,
-  updateUserPassword,
+  updateUserPasswordAndRevokeSessions,
 } from '../lib/users';
 import {
   signToken,
@@ -41,7 +41,7 @@ router.post('/register', registrationRateLimit, async (req, res) => {
   if (existing) return res.status(400).json({ error: 'User already exists' });
   const hash = await bcrypt.hash(password, 12);
   const user = createUser(email, hash, name);
-  const token = signToken({ id: user.id });
+  const token = signToken(user);
   return res.json({ token, user: { id: user.id, email: user.email, name: user.name } });
 });
 
@@ -63,7 +63,7 @@ router.post('/login', loginIpRateLimit, loginAccountRateLimit, async (req, res) 
   if (!user) return res.status(400).json({ error: 'Invalid credentials' });
   const ok = await bcrypt.compare(password, user.passwordHash);
   if (!ok) return res.status(400).json({ error: 'Invalid credentials' });
-  const token = signToken({ id: user.id });
+  const token = signToken(user);
   return res.json({ token, user: { id: user.id, email: user.email, name: user.name } });
 });
 
@@ -129,10 +129,14 @@ router.post('/change-password', authMiddleware, async (req, res) => {
     return res.status(400).json({ error: 'Current password is incorrect.' });
   }
   const hash = await bcrypt.hash(newPassword, 12);
-  if (!updateUserPassword(user.id, hash)) {
+  const updatedUser = updateUserPasswordAndRevokeSessions(user.id, hash);
+  if (!updatedUser) {
     return res.status(404).json({ error: 'User not found' });
   }
-  return res.status(204).send();
+  return res.json({
+    token: signToken(updatedUser),
+    user: { id: updatedUser.id, email: updatedUser.email, name: updatedUser.name },
+  });
 });
 
 export default router;

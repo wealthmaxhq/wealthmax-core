@@ -24,7 +24,7 @@ export interface Goal {
 export type GoalInput = Pick<Goal, 'title' | 'targetAmount' | 'currentAmount'>
   & Partial<Pick<Goal, 'targetDate' | 'notes'>>;
 
-interface AuthResponse {
+export interface AuthResponse {
   token: string;
   user: User;
 }
@@ -121,7 +121,7 @@ export function updateCurrentUser(name: string | null) {
 }
 
 export function changePassword(data: { currentPassword: string; newPassword: string }) {
-  return api.post<void>('/api/auth/change-password', data);
+  return api.post<AuthResponse>('/api/auth/change-password', data);
 }
 
 export function deleteCurrentUser(password: string, confirmation: string) {

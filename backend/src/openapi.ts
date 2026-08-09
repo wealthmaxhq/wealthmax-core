@@ -93,7 +93,7 @@ export const openApiDocument = {
       post: {
         tags: ['Authentication'], summary: 'Change the current password', operationId: 'changePassword', security: bearerSecurity,
         requestBody: { required: true, content: { 'application/json': { schema: { $ref: '#/components/schemas/ChangePasswordInput' } } } },
-        responses: { 204: { description: 'Password changed' }, 400: errorResponses[400], 401: errorResponses[401] },
+        responses: { 200: { description: 'Password changed and replacement session issued', content: { 'application/json': { schema: { $ref: '#/components/schemas/AuthResponse' } } } }, 400: errorResponses[400], 401: errorResponses[401] },
       },
     },
     '/api/goals': {

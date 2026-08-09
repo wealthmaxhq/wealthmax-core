@@ -74,6 +74,8 @@ describe('Auth E2E', () => {
     const password = 'original-password';
     const registration = await request(app).post('/api/auth/register').send({ email, password });
     const authorization = `Bearer ${registration.body.token}`;
+    const secondSession = await request(app).post('/api/auth/login').send({ email, password });
+    const secondAuthorization = `Bearer ${secondSession.body.token}`;
 
     const updated = await request(app).patch('/api/auth/me')
       .set('Authorization', authorization).send({ name: '  Account Owner  ' });
@@ -103,7 +105,18 @@ describe('Auth E2E', () => {
     const changed = await request(app).post('/api/auth/change-password')
       .set('Authorization', authorization)
       .send({ currentPassword: password, newPassword: 'replacement-password' });
-    expect(changed.status).toBe(204);
+    expect(changed.status).toBe(200);
+    expect(changed.body.token).toEqual(expect.any(String));
+
+    const revokedFirst = await request(app).get('/api/auth/me')
+      .set('Authorization', authorization);
+    expect(revokedFirst.status).toBe(401);
+    const revokedSecond = await request(app).get('/api/auth/me')
+      .set('Authorization', secondAuthorization);
+    expect(revokedSecond.status).toBe(401);
+    const replacementSession = await request(app).get('/api/auth/me')
+      .set('Authorization', `Bearer ${changed.body.token}`);
+    expect(replacementSession.status).toBe(200);
 
     const oldLogin = await request(app).post('/api/auth/login').send({ email, password });
     expect(oldLogin.status).toBe(400);
