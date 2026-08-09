@@ -14,8 +14,8 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  dart:
-    name: Dart financial SDK
+  dart-quality:
+    name: Dart formatting and analysis
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
@@ -44,8 +44,86 @@ jobs:
       - name: Analyze Dart code
         run: dart analyze --fatal-infos
 
-      - name: Run Dart tests
-        run: dart test
+      - name: Verify every Dart test is assigned to a tier
+        shell: bash
+        run: |
+          find test -type f -name '*_test.dart' -print | sort > /tmp/all-dart-tests.txt
+          find \
+            test/calculation \
+            test/currency \
+            test/health \
+            test/investment \
+            test/loan \
+            test/money \
+            test/percentage \
+            test/rounding \
+            test/decision \
+            test/reporting \
+            -type f -name '*_test.dart' -print | sort > /tmp/tiered-dart-tests.txt
+          diff -u /tmp/all-dart-tests.txt /tmp/tiered-dart-tests.txt
+
+  dart-core-tests:
+    name: Dart core tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v5
+
+      - name: Set up Dart
+        uses: dart-lang/setup-dart@v1
+        with:
+          sdk: 3.12.2
+
+      - name: Cache Dart packages
+        uses: actions/cache@v6
+        with:
+          path: ~/.pub-cache
+          key: ${{ runner.os }}-dart-${{ hashFiles('pubspec.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-dart-
+
+      - name: Install Dart dependencies
+        run: dart pub get
+
+      - name: Run core financial tests
+        run: >-
+          dart test
+          test/calculation
+          test/currency
+          test/health
+          test/investment
+          test/loan
+          test/money
+          test/percentage
+          test/rounding
+
+  dart-advanced-tests:
+    name: Dart decision and reporting tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v5
+
+      - name: Set up Dart
+        uses: dart-lang/setup-dart@v1
+        with:
+          sdk: 3.12.2
+
+      - name: Cache Dart packages
+        uses: actions/cache@v6
+        with:
+          path: ~/.pub-cache
+          key: ${{ runner.os }}-dart-${{ hashFiles('pubspec.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-dart-
+
+      - name: Install Dart dependencies
+        run: dart pub get
+
+      - name: Run decision and reporting tests
+        run: dart test test/decision test/reporting
 
   backend:
     name: Backend API
