@@ -18,10 +18,15 @@ import {
   normalizedName,
   validPassword,
 } from '../lib/authValidation';
+import {
+  loginAccountRateLimit,
+  loginIpRateLimit,
+  registrationRateLimit,
+} from '../lib/authRateLimits';
 
 const router = Router();
 
-router.post('/register', async (req, res) => {
+router.post('/register', registrationRateLimit, async (req, res) => {
   let email: string;
   let password: string;
   let name: string | undefined;
@@ -40,7 +45,7 @@ router.post('/register', async (req, res) => {
   return res.json({ token, user: { id: user.id, email: user.email, name: user.name } });
 });
 
-router.post('/login', async (req, res) => {
+router.post('/login', loginIpRateLimit, loginAccountRateLimit, async (req, res) => {
   let email: string;
   let password: string;
   try {
