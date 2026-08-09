@@ -2,6 +2,7 @@ import { Router } from 'express';
 import bcrypt from 'bcrypt';
 import {
   createUser,
+  deleteUserAndOwnedData,
   findUserByEmail,
   findUserById,
   updateUserName,
@@ -84,6 +85,26 @@ router.patch('/me', authMiddleware, (req, res) => {
   const user = updateUserName(authenticatedUser.id, name);
   if (!user) return res.status(404).json({ error: 'User not found' });
   return res.json({ user: { id: user.id, email: user.email, name: user.name } });
+});
+
+router.delete('/me', authMiddleware, async (req, res) => {
+  const password = req.body?.password;
+  if (req.body?.confirmation !== 'DELETE') {
+    return res.status(400).json({ error: 'Type DELETE to confirm account deletion.' });
+  }
+  if (typeof password !== 'string' || !password || password.length > 128) {
+    return res.status(400).json({ error: 'Current password is incorrect.' });
+  }
+
+  const authenticatedUser = (req as AuthenticatedRequest).user!;
+  const user = findUserById(authenticatedUser.id);
+  if (!user || !await bcrypt.compare(password, user.passwordHash)) {
+    return res.status(400).json({ error: 'Current password is incorrect.' });
+  }
+  if (!deleteUserAndOwnedData(user.id)) {
+    return res.status(404).json({ error: 'User not found' });
+  }
+  return res.status(204).send();
 });
 
 router.post('/change-password', authMiddleware, async (req, res) => {

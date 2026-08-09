@@ -113,6 +113,64 @@ describe('Auth E2E', () => {
     expect(newLogin.status).toBe(200);
   }, 30_000);
 
+  test('requires reauthentication and deletes all owned data atomically', async () => {
+    const email = 'delete-me@example.com';
+    const password = 'delete-password';
+    const registration = await request(app).post('/api/auth/register').send({
+      email,
+      password,
+    });
+    const userId = registration.body.user.id as string;
+    const authorization = `Bearer ${registration.body.token}`;
+    const retainedRegistration = await request(app).post('/api/auth/register').send({
+      email: 'keep-me@example.com',
+      password: 'keep-password',
+    });
+    const retainedUserId = retainedRegistration.body.user.id as string;
+
+    db.prepare(`INSERT INTO goals
+      (id, userId, title, targetAmount, currentAmount, createdAt)
+      VALUES (?, ?, ?, ?, ?, ?)`)
+      .run('delete-goal', userId, 'Delete goal', 1000, 100, new Date().toISOString());
+    db.prepare(`INSERT INTO goals
+      (id, userId, title, targetAmount, currentAmount, createdAt)
+      VALUES (?, ?, ?, ?, ?, ?)`)
+      .run('retained-goal', retainedUserId, 'Retained goal', 2000, 200, new Date().toISOString());
+    db.prepare(`INSERT INTO decision_reports
+      (id, userId, title, currency, schemaVersion, sourceFormulaId, snapshotJson, createdAt)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?)`)
+      .run(
+        'delete-report', userId, 'Delete report', 'INR', 1, 'REP-002', '{}',
+        new Date().toISOString(),
+      );
+
+    const missingConfirmation = await request(app).delete('/api/auth/me')
+      .set('Authorization', authorization).send({ password, confirmation: 'delete' });
+    expect(missingConfirmation.status).toBe(400);
+
+    const wrongPassword = await request(app).delete('/api/auth/me')
+      .set('Authorization', authorization)
+      .send({ password: 'wrong-password', confirmation: 'DELETE' });
+    expect(wrongPassword.status).toBe(400);
+    expect(db.prepare('SELECT 1 FROM users WHERE id = ?').get(userId)).toBeDefined();
+
+    const deleted = await request(app).delete('/api/auth/me')
+      .set('Authorization', authorization).send({ password, confirmation: 'DELETE' });
+    expect(deleted.status).toBe(204);
+    expect(db.prepare('SELECT 1 FROM users WHERE id = ?').get(userId)).toBeUndefined();
+    expect(db.prepare('SELECT 1 FROM goals WHERE userId = ?').get(userId)).toBeUndefined();
+    expect(db.prepare('SELECT 1 FROM decision_reports WHERE userId = ?').get(userId))
+      .toBeUndefined();
+    expect(db.prepare('SELECT 1 FROM users WHERE id = ?').get(retainedUserId)).toBeDefined();
+    expect(db.prepare('SELECT 1 FROM goals WHERE userId = ?').get(retainedUserId))
+      .toBeDefined();
+
+    const staleSession = await request(app).get('/api/auth/me')
+      .set('Authorization', authorization);
+    expect(staleSession.status).toBe(401);
+    const login = await request(app).post('/api/auth/login').send({ email, password });
+    expect(login.status).toBe(400);
+  }, 30_000);
   test('limits repeated login failures per normalized account', async () => {
     await request(app).post('/api/auth/register').send({
       email: 'protected@example.com',

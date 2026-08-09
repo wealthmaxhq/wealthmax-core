@@ -83,6 +83,11 @@ export const openApiDocument = {
         requestBody: { required: true, content: { 'application/json': { schema: { type: 'object', required: ['name'], properties: { name: { type: ['string', 'null'], maxLength: 100 } } } } } },
         responses: { 200: { description: 'Account updated', content: json }, ...errorResponses },
       },
+      delete: {
+        tags: ['Authentication'], summary: 'Permanently delete the current account and owned data', operationId: 'deleteCurrentUser', security: bearerSecurity,
+        requestBody: { required: true, content: { 'application/json': { schema: { $ref: '#/components/schemas/DeleteAccountInput' } } } },
+        responses: { 204: { description: 'Account and owned data deleted' }, 400: errorResponses[400], 401: errorResponses[401], 404: errorResponses[404] },
+      },
     },
     '/api/auth/change-password': {
       post: {
@@ -184,6 +189,10 @@ export const openApiDocument = {
       ChangePasswordInput: {
         type: 'object', required: ['currentPassword', 'newPassword'], additionalProperties: false,
         properties: { currentPassword: { type: 'string', minLength: 1, maxLength: 128 }, newPassword: { type: 'string', minLength: 8, maxLength: 128 } },
+      },
+      DeleteAccountInput: {
+        type: 'object', required: ['password', 'confirmation'], additionalProperties: false,
+        properties: { password: { type: 'string', minLength: 1, maxLength: 128 }, confirmation: { type: 'string', const: 'DELETE' } },
       },
       User: {
         type: 'object', required: ['id', 'email'], properties: { id: { type: 'string', format: 'uuid' }, email: { type: 'string', format: 'email' }, name: { type: 'string' } },

@@ -1,6 +1,6 @@
 import { FormEvent, useState } from 'react';
 import axios from 'axios';
-import { changePassword, updateCurrentUser } from '../api';
+import { changePassword, deleteCurrentUser, updateCurrentUser } from '../api';
 import { useAuth } from '../auth';
 
 function errorMessage(error: unknown): string {
@@ -11,7 +11,7 @@ function errorMessage(error: unknown): string {
 }
 
 export default function Account() {
-  const { user, updateUser } = useAuth();
+  const { user, updateUser, logout } = useAuth();
   const [name, setName] = useState(user?.name ?? '');
   const [profileStatus, setProfileStatus] = useState('');
   const [profileError, setProfileError] = useState('');
@@ -22,6 +22,10 @@ export default function Account() {
   const [passwordStatus, setPasswordStatus] = useState('');
   const [passwordError, setPasswordError] = useState('');
   const [savingPassword, setSavingPassword] = useState(false);
+  const [deletionPassword, setDeletionPassword] = useState('');
+  const [deletionConfirmation, setDeletionConfirmation] = useState('');
+  const [deletionError, setDeletionError] = useState('');
+  const [deleting, setDeleting] = useState(false);
 
   async function saveProfile(event: FormEvent) {
     event.preventDefault();
@@ -62,6 +66,19 @@ export default function Account() {
     }
   }
 
+  async function deleteAccount(event: FormEvent) {
+    event.preventDefault();
+    setDeletionError('');
+    setDeleting(true);
+    try {
+      await deleteCurrentUser(deletionPassword, deletionConfirmation);
+      logout();
+    } catch (error) {
+      setDeletionError(errorMessage(error));
+      setDeleting(false);
+    }
+  }
+
   return (
     <main>
       <header className="page-header">
@@ -89,6 +106,16 @@ export default function Account() {
             <label>New password<input autoComplete="new-password" minLength={8} maxLength={128} required type="password" value={newPassword} onChange={(event) => setNewPassword(event.target.value)} /></label>
             <label>Confirm new password<input autoComplete="new-password" minLength={8} maxLength={128} required type="password" value={confirmPassword} onChange={(event) => setConfirmPassword(event.target.value)} /></label>
             <button className="primary-button" disabled={savingPassword} type="submit">{savingPassword ? 'Changing…' : 'Change password'}</button>
+          </form>
+        </section>
+        <section className="panel account-card danger-zone">
+          <h2>Delete account</h2>
+          <p className="muted">Permanently delete your account, goals, and saved decision reports. This cannot be undone.</p>
+          {deletionError && <div className="alert" role="alert">{deletionError}</div>}
+          <form className="auth-form" onSubmit={deleteAccount}>
+            <label>Current password<input autoComplete="current-password" maxLength={128} required type="password" value={deletionPassword} onChange={(event) => setDeletionPassword(event.target.value)} /></label>
+            <label>Type DELETE to confirm<input autoComplete="off" required value={deletionConfirmation} onChange={(event) => setDeletionConfirmation(event.target.value)} /></label>
+            <button className="destructive-button" disabled={deleting || deletionConfirmation !== 'DELETE'} type="submit">{deleting ? 'Deleting…' : 'Permanently delete account'}</button>
           </form>
         </section>
       </div>

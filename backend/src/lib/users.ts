@@ -47,3 +47,14 @@ export function updateUserPassword(id: string, passwordHash: string): boolean {
   const result = db.prepare('UPDATE users SET passwordHash = ? WHERE id = ?').run(passwordHash, id);
   return result.changes > 0;
 }
+
+export function deleteUserAndOwnedData(id: string): boolean {
+  return db.transaction(() => {
+    const exists = db.prepare('SELECT 1 FROM users WHERE id = ?').get(id);
+    if (!exists) return false;
+
+    db.prepare('DELETE FROM decision_reports WHERE userId = ?').run(id);
+    db.prepare('DELETE FROM goals WHERE userId = ?').run(id);
+    return db.prepare('DELETE FROM users WHERE id = ?').run(id).changes === 1;
+  })();
+}
