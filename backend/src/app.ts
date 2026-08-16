@@ -5,9 +5,13 @@ import recommendationsRouter from './routes/recommendations';
 import decisionReportsRouter from './routes/decisionReports';
 import { openApiDocument } from './openapi';
 import financialHealthRouter from './routes/financialHealth';
+import { jsonParseErrorHandler, secureResponseHeaders } from './lib/httpSecurity';
 
 const app = express();
-app.use(express.json());
+app.disable('x-powered-by');
+app.use(secureResponseHeaders);
+app.use(express.json({ limit: 64 * 1024, strict: true }));
+app.use(jsonParseErrorHandler);
 app.get('/health', (req, res) => res.json({ status: 'ok' }));
 app.get('/openapi.json', (req, res) => res.json(openApiDocument));
 app.use('/api/auth', authRouter);
