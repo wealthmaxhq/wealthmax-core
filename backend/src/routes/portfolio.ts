@@ -4,6 +4,7 @@ import {
   createPortfolioEntry,
   deletePortfolioEntry,
   listPortfolioEntries,
+  listPortfolioHistory,
   PortfolioInput,
   portfolioSummary,
   updatePortfolioEntry,
@@ -44,6 +45,22 @@ function input(value: unknown): PortfolioInput {
 router.get('/', (req: any, res) => {
   const entries = listPortfolioEntries(req.user.id);
   res.json({ apiVersion: 'v1', entries, summaries: portfolioSummary(entries) });
+});
+
+router.get('/history', (req: any, res) => {
+  const currency = req.query.currency;
+  const requestedLimit = req.query.limit === undefined ? 90 : Number(req.query.limit);
+  if (!['INR', 'USD', 'EUR'].includes(currency as string)) {
+    return res.status(400).json({ error: 'Currency must be INR, USD, or EUR.' });
+  }
+  if (!Number.isInteger(requestedLimit) || requestedLimit < 1 || requestedLimit > 365) {
+    return res.status(400).json({ error: 'Limit must be an integer from 1 to 365.' });
+  }
+  return res.json({
+    apiVersion: 'v1',
+    currency,
+    snapshots: listPortfolioHistory(req.user.id, currency, requestedLimit).reverse(),
+  });
 });
 
 router.post('/', (req: any, res) => {

@@ -76,6 +76,11 @@ adds unlike currencies together. `POST /api/v1/portfolio` creates an entry;
 removes one. Every operation is owner-scoped, and deleting an account also
 deletes its portfolio entries.
 
+Every portfolio mutation also records an immutable per-currency snapshot.
+`GET /api/v1/portfolio/history?currency=INR` returns up to 90 chronological
+snapshots by default; `limit` accepts 1 through 365. History remains currency
+separated and is removed with the account.
+
 ## Decision report API
 
 `POST /api/v1/decision-reports` runs the Dart financial engine and returns a

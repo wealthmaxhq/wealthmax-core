@@ -43,6 +43,14 @@ describe('Portfolio E2E', () => {
     const deleted = await request(app).delete(`/api/v1/portfolio/${asset.body.entry.id}`)
       .set('Authorization', authorization);
     expect(deleted.status).toBe(204);
+
+    const history = await request(app).get('/api/v1/portfolio/history?currency=USD&limit=10')
+      .set('Authorization', authorization);
+    expect(history.status).toBe(200);
+    expect(history.body.snapshots).toHaveLength(4);
+    expect(history.body.snapshots.at(-1)).toEqual(expect.objectContaining({
+      currency: 'USD', assets: 0, liabilities: 8000, netWorth: -8000,
+    }));
   });
 
   test('validates input and isolates every mutation by user', async () => {
@@ -67,6 +75,16 @@ describe('Portfolio E2E', () => {
     const otherList = await request(app).get('/api/v1/portfolio')
       .set('Authorization', `Bearer ${other.token}`);
     expect(otherList.body.entries).toHaveLength(0);
+    const otherHistory = await request(app).get('/api/v1/portfolio/history?currency=EUR')
+      .set('Authorization', `Bearer ${other.token}`);
+    expect(otherHistory.body.snapshots).toHaveLength(0);
+
+    const badCurrency = await request(app).get('/api/v1/portfolio/history?currency=GBP')
+      .set('Authorization', `Bearer ${owner.token}`);
+    const badLimit = await request(app).get('/api/v1/portfolio/history?currency=EUR&limit=1000')
+      .set('Authorization', `Bearer ${owner.token}`);
+    expect(badCurrency.status).toBe(400);
+    expect(badLimit.status).toBe(400);
   });
 
   test('requires authentication', async () => {
