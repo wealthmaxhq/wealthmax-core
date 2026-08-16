@@ -54,6 +54,7 @@ pnpm --filter wealth-planner-backend run typecheck
 pnpm --filter wealth-planner-backend run build
 pnpm --filter wealth-planner-backend test
 pnpm --filter wealth-planner-frontend run typecheck
+pnpm --filter wealth-planner-frontend test
 pnpm --filter wealth-planner-frontend run build
 ```
 
