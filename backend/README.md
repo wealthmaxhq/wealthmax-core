@@ -79,7 +79,9 @@ deletes its portfolio entries.
 Every portfolio mutation also records an immutable per-currency snapshot.
 `GET /api/v1/portfolio/history?currency=INR` returns up to 90 chronological
 snapshots by default; `limit` accepts 1 through 365. History remains currency
-separated and is removed with the account.
+separated and is removed with the account. `GET /api/v1/portfolio/export.csv`
+downloads the authenticated user's entries as an Excel-compatible UTF-8 CSV;
+text cells are escaped to prevent spreadsheet formula injection.
 
 ## Decision report API
 

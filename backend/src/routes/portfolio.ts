@@ -9,6 +9,7 @@ import {
   portfolioSummary,
   updatePortfolioEntry,
 } from '../lib/portfolio';
+import { portfolioCsv, portfolioCsvFilename } from '../lib/portfolioCsv';
 
 const router = Router();
 router.use(authMiddleware);
@@ -61,6 +62,12 @@ router.get('/history', (req: any, res) => {
     currency,
     snapshots: listPortfolioHistory(req.user.id, currency, requestedLimit).reverse(),
   });
+});
+
+router.get('/export.csv', (req: any, res) => {
+  res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+  res.setHeader('Content-Disposition', `attachment; filename="${portfolioCsvFilename}"`);
+  return res.send(portfolioCsv(listPortfolioEntries(req.user.id)));
 });
 
 router.post('/', (req: any, res) => {

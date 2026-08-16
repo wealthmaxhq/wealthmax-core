@@ -185,6 +185,10 @@ export function getPortfolioHistory(currency: PortfolioEntry['currency'], limit 
   );
 }
 
+export function exportPortfolioCsv() {
+  return api.get<Blob>('/api/v1/portfolio/export.csv', { responseType: 'blob' });
+}
+
 export function createPortfolioEntry(payload: PortfolioEntryInput) {
   return api.post<{ entry: PortfolioEntry }>('/api/v1/portfolio', payload);
 }

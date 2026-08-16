@@ -182,6 +182,12 @@ export const openApiDocument = {
         responses: { 200: { description: 'Chronological per-currency portfolio snapshots', content: json }, 400: errorResponses[400], 401: errorResponses[401] },
       },
     },
+    '/api/v1/portfolio/export.csv': {
+      get: {
+        tags: ['Portfolio'], summary: 'Export portfolio entries as CSV', operationId: 'exportPortfolioCsv', security: bearerSecurity,
+        responses: { 200: { description: 'Excel-compatible UTF-8 CSV', content: { 'text/csv': { schema: { type: 'string' } } } }, 401: errorResponses[401] },
+      },
+    },
     '/api/v1/decision-reports/{id}': {
       parameters: [{ $ref: '#/components/parameters/ResourceId' }],
       get: {
