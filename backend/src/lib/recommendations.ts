@@ -1,31 +1,30 @@
 import { listGoalsByUser } from './goals';
-import { findUserById } from './users';
+const defaultHorizonMonths = 60;
 
-function monthsUntil(dateStr?: string) {
-  if (!dateStr) return 60; // default 5 years
-  const target = new Date(dateStr);
-  const ms = target.getTime() - Date.now();
-  const months = Math.max(1, Math.ceil(ms / (1000 * 60 * 60 * 24 * 30)));
-  return months;
+function monthsUntil(dateStr: string | undefined, now: Date): number {
+  if (!dateStr) return defaultHorizonMonths;
+  const target = new Date(`${dateStr}T00:00:00Z`);
+  const currentMonth = now.getUTCFullYear() * 12 + now.getUTCMonth();
+  const targetMonth = target.getUTCFullYear() * 12 + target.getUTCMonth();
+  return Math.max(1, targetMonth - currentMonth);
 }
 
-export function computeMonthlyNeededForGoals(userId: string) {
+export function computeMonthlyNeededForGoals(userId: string, now = new Date()) {
   const goals = listGoalsByUser(userId);
   let total = 0;
   const breakdown = goals.map(g => {
-    const months = monthsUntil(g.targetDate);
-    const remaining = Math.max(0, (g.targetAmount || 0) - (g.currentAmount || 0));
-    const monthly = months > 0 ? remaining / months : remaining;
+    const months = monthsUntil(g.targetDate, now);
+    const remaining = Math.max(0, g.targetAmount - g.currentAmount);
+    const monthly = Number((remaining / months).toFixed(2));
     total += monthly;
     return { id: g.id, title: g.title, remaining, months, monthly };
   });
   return { totalMonthlyRequired: Number(total.toFixed(2)), breakdown };
 }
 
-export function suggestAllocation(userId: string) {
-  // Simple heuristic based on nearest goal
+export function suggestAllocation(userId: string, now = new Date()) {
   const goals = listGoalsByUser(userId);
-  const monthsList = goals.map(g => monthsUntil(g.targetDate));
+  const monthsList = goals.map(g => monthsUntil(g.targetDate, now));
   const nearest = monthsList.length ? Math.min(...monthsList) : 120;
 
   if (nearest <= 36) {
@@ -37,14 +36,13 @@ export function suggestAllocation(userId: string) {
   return { profile: 'Aggressive', allocation: { stocks: 0.85, bonds: 0.1, cash: 0.05 }, reason: 'Long-term goals; favor growth.' };
 }
 
-export function getRecommendations(userId: string) {
-  const user = findUserById(userId);
-  const savings = computeMonthlyNeededForGoals(userId);
-  const allocation = suggestAllocation(userId);
+export function getRecommendations(userId: string, now = new Date()) {
+  const savings = computeMonthlyNeededForGoals(userId, now);
+  const allocation = suggestAllocation(userId, now);
   return {
-    user: { id: user?.id, email: user?.email, name: user?.name },
+    apiVersion: 'v1' as const,
     savings,
     allocation,
-    generatedAt: new Date().toISOString(),
+    generatedAt: now.toISOString(),
   };
 }

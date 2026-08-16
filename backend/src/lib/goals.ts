@@ -1,5 +1,5 @@
 import db from '../db';
-import { v4 as uuidv4 } from 'uuid';
+import { randomUUID } from 'node:crypto';
 
 export interface Goal {
   id: string;
@@ -14,7 +14,7 @@ export interface Goal {
 }
 
 export function listGoalsByUser(userId: string): Goal[] {
-  const rows = db.prepare('SELECT id, userId, title, targetAmount, currentAmount, targetDate, notes, createdAt, updatedAt FROM goals WHERE userId = ?').all(userId);
+  const rows = db.prepare('SELECT id, userId, title, targetAmount, currentAmount, targetDate, notes, createdAt, updatedAt FROM goals WHERE userId = ? ORDER BY createdAt DESC, id DESC').all(userId);
   return rows.map((r: any) => ({
     id: r.id,
     userId: r.userId,
@@ -45,7 +45,7 @@ export function getGoalById(id: string): Goal | undefined {
 }
 
 export function createGoal(userId: string, data: Partial<Goal>): Goal {
-  const id = uuidv4();
+  const id = randomUUID();
   const now = new Date().toISOString();
   const stmt = db.prepare('INSERT INTO goals (id, userId, title, targetAmount, currentAmount, targetDate, notes, createdAt, updatedAt) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)');
   stmt.run(id, userId, data.title || 'New Goal', data.targetAmount || 0, data.currentAmount || 0, data.targetDate || null, data.notes || null, now, now);
@@ -65,14 +65,28 @@ export function createGoal(userId: string, data: Partial<Goal>): Goal {
 export function updateGoal(id: string, userId: string, patch: Partial<Goal>): Goal | undefined {
   const existing = getGoalById(id);
   if (!existing || existing.userId !== userId) return undefined;
-  const updated = { ...existing, ...patch, updatedAt: new Date().toISOString() } as Goal;
+  const updated: Goal = {
+    ...existing,
+    title: patch.title ?? existing.title,
+    targetAmount: patch.targetAmount ?? existing.targetAmount,
+    currentAmount: patch.currentAmount ?? existing.currentAmount,
+    targetDate: patch.targetDate ?? existing.targetDate,
+    notes: patch.notes ?? existing.notes,
+    updatedAt: new Date().toISOString(),
+  };
   const stmt = db.prepare('UPDATE goals SET title = ?, targetAmount = ?, currentAmount = ?, targetDate = ?, notes = ?, updatedAt = ? WHERE id = ? AND userId = ?');
   stmt.run(updated.title, updated.targetAmount, updated.currentAmount, updated.targetDate || null, updated.notes || null, updated.updatedAt, id, userId);
   return updated;
 }
 
 export function deleteGoal(id: string, userId: string): boolean {
-  const stmt = db.prepare('DELETE FROM goals WHERE id = ? AND userId = ?');
-  const info = stmt.run(id, userId);
-  return info.changes > 0;
+  return db.transaction(() => {
+    const existing = getGoalById(id);
+    if (!existing || existing.userId !== userId) return false;
+    db.prepare(
+      'UPDATE decision_reports SET goalId = NULL WHERE goalId = ? AND userId = ?',
+    ).run(id, userId);
+    return db.prepare('DELETE FROM goals WHERE id = ? AND userId = ?')
+      .run(id, userId).changes > 0;
+  })();
 }
