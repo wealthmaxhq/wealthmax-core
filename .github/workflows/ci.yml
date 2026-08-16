@@ -125,8 +125,8 @@ jobs:
       - name: Run decision and reporting tests
         run: dart test test/decision test/reporting
 
-  backend:
-    name: Backend API
+  backend-quality:
+    name: Backend typecheck and build
     runs-on: ubuntu-latest
     timeout-minutes: 15
     env:
@@ -147,16 +147,8 @@ jobs:
           node-version: 22
           cache: pnpm
 
-      - name: Set up Dart for decision reports
-        uses: dart-lang/setup-dart@v1
-        with:
-          sdk: 3.12.2
-
       - name: Install workspace dependencies
         run: pnpm install --frozen-lockfile
-
-      - name: Install Dart dependencies
-        run: dart pub get
 
       - name: Type-check backend
         run: pnpm --filter wealth-planner-backend run typecheck
@@ -164,8 +156,62 @@ jobs:
       - name: Build backend
         run: pnpm --filter wealth-planner-backend run build
 
-      - name: Test backend
-        run: pnpm --filter wealth-planner-backend test
+      - name: Verify every backend test is assigned to a tier
+        run: pnpm --filter wealth-planner-backend run test:verify-tiers
+
+  backend-fast-tests:
+    name: Backend fast API tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      NODE_ENV: test
+      JWT_SECRET: ci-only-jwt-secret-not-for-production-1234567890
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v5
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v4.4.0
+        with:
+          version: 11
+      - name: Set up Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          cache: pnpm
+      - name: Install workspace dependencies
+        run: pnpm install --frozen-lockfile
+      - name: Run fast backend tests
+        run: pnpm --filter wealth-planner-backend run test:fast
+
+  backend-dart-bridge-tests:
+    name: Backend Dart bridge tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      NODE_ENV: test
+      JWT_SECRET: ci-only-jwt-secret-not-for-production-1234567890
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v5
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v4.4.0
+        with:
+          version: 11
+      - name: Set up Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          cache: pnpm
+      - name: Set up Dart for calculation bridges
+        uses: dart-lang/setup-dart@v1
+        with:
+          sdk: 3.12.2
+      - name: Install workspace dependencies
+        run: pnpm install --frozen-lockfile
+      - name: Install Dart dependencies
+        run: dart pub get
+      - name: Run backend Dart bridge tests
+        run: pnpm --filter wealth-planner-backend run test:dart-bridge
 
   frontend:
     name: Frontend web app

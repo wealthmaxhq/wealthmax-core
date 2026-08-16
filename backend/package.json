@@ -8,7 +8,10 @@
     "typecheck": "tsc --noEmit",
     "start": "node dist/index.js",
     "dev": "ts-node-dev --respawn --transpile-only src/index.ts",
-    "test": "jest --runInBand"
+    "test": "npm run test:verify-tiers && jest --runInBand",
+    "test:verify-tiers": "node scripts/verify-test-tiers.js",
+    "test:fast": "node scripts/run-test-tier.js fast",
+    "test:dart-bridge": "node scripts/run-test-tier.js dartBridge"
   },
   "dependencies": {
     "express": "^5.2.1",

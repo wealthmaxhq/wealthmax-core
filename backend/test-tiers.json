@@ -1,0 +1,16 @@
+{
+  "fast": [
+    "tests/auth.test.ts",
+    "tests/decisionReportCsv.test.ts",
+    "tests/goals.test.ts",
+    "tests/httpSecurity.test.ts",
+    "tests/openapi.test.ts",
+    "tests/portfolio.test.ts",
+    "tests/portfolioCsv.test.ts",
+    "tests/recommendations.test.ts"
+  ],
+  "dartBridge": [
+    "tests/decisionReports.test.ts",
+    "tests/financialHealth.test.ts"
+  ]
+}
