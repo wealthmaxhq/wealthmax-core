@@ -31,6 +31,16 @@ interface.
 `JWT_SECRET` is mandatory and must contain at least 32 characters. Tokens expire
 after one hour and are restricted to the WealthMax issuer and web audience.
 
+## HTTP security
+
+The API suppresses Express framework identification and applies restrictive
+content, framing, referrer, resource, and browser-permission headers to every
+response. Authenticated API responses use `Cache-Control: no-store`. JSON request
+bodies are capped at 64 KiB; malformed JSON returns HTTP 400 and oversized JSON
+returns HTTP 413 with stable public errors. Cross-origin browser access is not
+enabled, so production web clients should use the same origin or a trusted
+reverse proxy.
+
 Public authentication endpoints reject excessive traffic with HTTP 429 and
 standard `RateLimit` and `Retry-After` headers. Registration allows 10 attempts
 per client per hour. Login allows 30 failed attempts per client and 10 failed
