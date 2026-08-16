@@ -21,6 +21,7 @@ export const openApiDocument = {
     { name: 'System' },
     { name: 'Authentication' },
     { name: 'Goals' },
+    { name: 'Recommendations' },
     { name: 'Decision reports' },
     { name: 'Financial health' },
   ],
@@ -133,6 +134,13 @@ export const openApiDocument = {
         description: 'Financial decimal values are JSON strings so precision is preserved across runtimes.',
         requestBody: { required: true, content: { 'application/json': { schema: { $ref: '#/components/schemas/DecisionReportInput' } } } },
         responses: { 201: { description: 'Report calculated and stored', content: json }, 400: errorResponses[400], 401: errorResponses[401], 503: { description: 'Calculation engine unavailable', content: json } },
+      },
+    },
+    '/api/v1/recommendations': {
+      get: {
+        tags: ['Recommendations'], summary: 'Get goal-based savings and allocation guidance', operationId: 'getRecommendations', security: bearerSecurity,
+        description: 'Returns a monthly savings target and a simple time-horizon allocation heuristic based only on the authenticated user goals.',
+        responses: { 200: { description: 'Current planning recommendations', content: json }, 401: errorResponses[401] },
       },
     },
     '/api/v1/financial-health-score': {

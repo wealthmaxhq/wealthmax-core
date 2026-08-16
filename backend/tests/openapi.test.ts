@@ -11,9 +11,9 @@ describe('OpenAPI contract', () => {
     const operations = Object.values(response.body.paths)
       .flatMap((path: any) => Object.entries(path))
       .filter(([method]) => ['get', 'post', 'put', 'patch', 'delete'].includes(method));
-    expect(operations).toHaveLength(20);
+    expect(operations).toHaveLength(21);
     expect(new Set(operations.map(([, operation]: any) => operation.operationId)).size)
-      .toBe(20);
+      .toBe(21);
 
     expect(response.body.paths['/api/auth/me'].delete.operationId)
       .toBe('deleteCurrentUser');
@@ -24,6 +24,8 @@ describe('OpenAPI contract', () => {
     expect(response.body.paths['/api/auth/login'].post.responses['429'].description)
       .toContain('rate limit');
     expect(response.body.paths['/api/goals'].get.security).toEqual([{ bearerAuth: [] }]);
+    expect(response.body.paths['/api/v1/recommendations'].get.security)
+      .toEqual([{ bearerAuth: [] }]);
     expect(response.body.paths['/api/v1/decision-reports'].post.responses['503'])
       .toBeDefined();
     expect(response.body.components.securitySchemes.bearerAuth.scheme).toBe('bearer');

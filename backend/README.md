@@ -12,6 +12,15 @@ URL into an OpenAPI-compatible client or documentation viewer. The contract is
 kept dependency-free and is covered by an integration test that checks route
 coverage and unique operation identifiers.
 
+## Goal recommendations API
+
+`GET /api/v1/recommendations` turns the authenticated user's goals into a
+monthly savings target and a transparent allocation heuristic. Each goal shows
+its remaining amount, planning horizon in calendar months, and monthly amount.
+Goals without a target date use a five-year planning horizon. The allocation is
+educational guidance based on the nearest goal, not individualized investment
+advice, and no other user's goals or account details are returned.
+
 ## Authentication
 
 Email addresses are trimmed, normalized to lowercase, and validated by the

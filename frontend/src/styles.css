@@ -181,6 +181,14 @@ textarea { resize: vertical; }
 .dashboard-reports a { border: 1px solid #e3e9e1; border-radius: 10px; padding: 13px; text-decoration: none; }
 .dashboard-reports a:hover { border-color: #9fc8ad; }
 .dashboard-reports small { display: block; margin-top: 6px; }
+.recommendations-panel { margin-top: 22px; }
+.recommendation-summary { display: grid; gap: 14px; grid-template-columns: repeat(3, 1fr); }
+.recommendation-summary > div { background: #f1f6f2; border-radius: 12px; padding: 18px; }
+.recommendation-summary span, .recommendation-summary small { color: #66756b; display: block; }
+.recommendation-summary span { font-size: 11px; margin-bottom: 8px; text-transform: uppercase; }
+.recommendation-summary strong { display: block; font-size: 22px; margin-bottom: 7px; }
+.recommendation-summary small { font-size: 11px; line-height: 1.45; }
+.recommendation-disclaimer { font-size: 11px; margin: 16px 0 0; }
 .goal-summary { display: grid; gap: 12px; grid-template-columns: repeat(4, 1fr); margin-bottom: 22px; }
 .goal-summary > div { background: #17251d; border-radius: 14px; color: #fff; padding: 18px; }
 .goal-summary span { color: #9eb1a5; display: block; font-size: 11px; margin-bottom: 7px; }
@@ -214,7 +222,7 @@ textarea { resize: vertical; }
   .goals-layout { grid-template-columns: 1fr; }
   .goal-editor { position: static; }
   .dashboard-header { align-items: start; flex-direction: column; }
-  .dashboard-metrics, .dashboard-grid { grid-template-columns: 1fr; }
+  .dashboard-metrics, .dashboard-grid, .recommendation-summary { grid-template-columns: 1fr; }
   .health-components { grid-template-columns: 1fr; }
 }
 

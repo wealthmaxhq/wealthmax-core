@@ -10,6 +10,10 @@ WealthMax Core is the full-stack foundation for WealthMax Pro. It combines preci
 
 The Node projects are managed as a pnpm workspace with a root `pnpm-lock.yaml`.
 
+The authenticated dashboard consolidates goal progress, decision reports, and
+goal-based monthly savings and allocation guidance. Recommendations are derived
+on demand from the current user's goals and are not stored.
+
 ## Local development
 
 Requirements: Dart 3.12.2, Node.js 22, and pnpm 11.

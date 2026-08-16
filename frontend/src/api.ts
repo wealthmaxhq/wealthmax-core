@@ -96,6 +96,20 @@ export interface FinancialHealthResult {
   findings: Array<'buildEmergencyFund' | 'reduceDebtBurden' | 'increaseSavingsRate'>;
 }
 
+export interface Recommendations {
+  apiVersion: 'v1';
+  savings: {
+    totalMonthlyRequired: number;
+    breakdown: Array<{ id: string; title: string; remaining: number; months: number; monthly: number }>;
+  };
+  allocation: {
+    profile: 'Conservative' | 'Balanced' | 'Aggressive';
+    allocation: { stocks: number; bonds: number; cash: number };
+    reason: string;
+  };
+  generatedAt: string;
+}
+
 const savedToken = localStorage.getItem('token');
 if (savedToken) setAuthToken(savedToken);
 
@@ -130,6 +144,10 @@ export function deleteCurrentUser(password: string, confirmation: string) {
 
 export function listGoals() {
   return api.get<{ goals: Goal[] }>('/api/goals');
+}
+
+export function getRecommendations() {
+  return api.get<{ recommendations: Recommendations }>('/api/v1/recommendations');
 }
 
 export function createGoal(payload: GoalInput) {

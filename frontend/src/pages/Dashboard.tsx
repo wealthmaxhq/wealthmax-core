@@ -3,6 +3,8 @@ import { Link } from 'react-router-dom';
 import {
   DecisionReportSummary,
   Goal,
+  Recommendations,
+  getRecommendations,
   listDecisionReports,
   listGoals,
 } from '../api';
@@ -17,14 +19,16 @@ export default function Dashboard() {
   const { user } = useAuth();
   const [goals, setGoals] = useState<Goal[]>([]);
   const [reports, setReports] = useState<DecisionReportSummary[]>([]);
+  const [recommendations, setRecommendations] = useState<Recommendations | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    Promise.all([listGoals(), listDecisionReports()])
-      .then(([goalResponse, reportResponse]) => {
+    Promise.all([listGoals(), listDecisionReports(), getRecommendations()])
+      .then(([goalResponse, reportResponse, recommendationResponse]) => {
         setGoals(goalResponse.data.goals);
         setReports(reportResponse.data.reports);
+        setRecommendations(recommendationResponse.data.recommendations);
       })
       .catch((requestError) => setError(message(requestError)))
       .finally(() => setLoading(false));
@@ -88,6 +92,20 @@ export default function Dashboard() {
               )}
             </section>
           </div>
+          {recommendations && goals.length > 0 && (
+            <section className="panel recommendations-panel">
+              <div className="section-heading">
+                <div><p className="step">Recommended next step</p><h2>Fund your goals deliberately</h2></div>
+                <Link className="text-link" to="/goals">Review goals</Link>
+              </div>
+              <div className="recommendation-summary">
+                <div><span>Monthly goal funding</span><strong>{recommendations.savings.totalMonthlyRequired.toLocaleString()}</strong><small>Across {recommendations.savings.breakdown.length} active {recommendations.savings.breakdown.length === 1 ? 'goal' : 'goals'}</small></div>
+                <div><span>Time-horizon profile</span><strong>{recommendations.allocation.profile}</strong><small>{recommendations.allocation.reason}</small></div>
+                <div><span>Illustrative allocation</span><strong>{Math.round(recommendations.allocation.allocation.stocks * 100)}% stocks</strong><small>{Math.round(recommendations.allocation.allocation.bonds * 100)}% bonds · {Math.round(recommendations.allocation.allocation.cash * 100)}% cash</small></div>
+              </div>
+              <p className="muted recommendation-disclaimer">Educational guidance based on goal timing, not individualized investment advice.</p>
+            </section>
+          )}
         </>
       )}
     </main>
