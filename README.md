@@ -39,7 +39,7 @@ The backend requires a `JWT_SECRET` of at least 32 characters. Keep production s
 
 ## Continuous integration
 
-The full-stack CI workflow runs for every pull request and push to `main`. Dart validation is split into parallel formatting/analysis, core financial tests, and calculation-heavy decision/reporting tests so foundational failures return quickly without reducing coverage. Backend TypeScript, build, and Jest tests run separately from the frontend TypeScript and production build. Superseded runs on the same branch are cancelled automatically.
+The full-stack CI workflow runs for every pull request and push to `main`. Dart validation is split into parallel formatting/analysis, core financial tests, and calculation-heavy decision/reporting tests. Backend validation is also parallelized into typecheck/build, fast API tests, and Dart-bridge integration tests, so ordinary API failures return without waiting for the calculation engine. The tier manifest is checked in CI so every backend test belongs to exactly one tier. Frontend validation runs independently, and superseded runs on the same branch are cancelled automatically.
 
 Run the same checks locally from the repository root:
 
@@ -56,6 +56,8 @@ pnpm install --frozen-lockfile
 pnpm --filter wealth-planner-backend run typecheck
 pnpm --filter wealth-planner-backend run build
 pnpm --filter wealth-planner-backend test
+pnpm --filter wealth-planner-backend run test:fast
+pnpm --filter wealth-planner-backend run test:dart-bridge
 pnpm --filter wealth-planner-frontend run typecheck
 pnpm --filter wealth-planner-frontend test
 pnpm --filter wealth-planner-frontend run build
