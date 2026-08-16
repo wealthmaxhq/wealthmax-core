@@ -110,6 +110,26 @@ export interface Recommendations {
   generatedAt: string;
 }
 
+export interface PortfolioEntry {
+  id: string;
+  name: string;
+  kind: 'asset' | 'liability';
+  category: string;
+  currency: 'INR' | 'USD' | 'EUR';
+  value: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export type PortfolioEntryInput = Pick<PortfolioEntry, 'name' | 'kind' | 'category' | 'currency' | 'value'>;
+
+export interface PortfolioSummary {
+  currency: PortfolioEntry['currency'];
+  assets: number;
+  liabilities: number;
+  netWorth: number;
+}
+
 const savedToken = localStorage.getItem('token');
 if (savedToken) setAuthToken(savedToken);
 
@@ -148,6 +168,22 @@ export function listGoals() {
 
 export function getRecommendations() {
   return api.get<{ recommendations: Recommendations }>('/api/v1/recommendations');
+}
+
+export function listPortfolio() {
+  return api.get<{ apiVersion: 'v1'; entries: PortfolioEntry[]; summaries: PortfolioSummary[] }>('/api/v1/portfolio');
+}
+
+export function createPortfolioEntry(payload: PortfolioEntryInput) {
+  return api.post<{ entry: PortfolioEntry }>('/api/v1/portfolio', payload);
+}
+
+export function updatePortfolioEntry(id: string, payload: PortfolioEntryInput) {
+  return api.put<{ entry: PortfolioEntry }>(`/api/v1/portfolio/${id}`, payload);
+}
+
+export function deletePortfolioEntry(id: string) {
+  return api.delete(`/api/v1/portfolio/${id}`);
 }
 
 export function createGoal(payload: GoalInput) {

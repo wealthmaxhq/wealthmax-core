@@ -50,6 +50,19 @@ CREATE TABLE IF NOT EXISTS decision_reports (
   createdAt TEXT NOT NULL,
   FOREIGN KEY (userId) REFERENCES users(id) ON DELETE CASCADE
 );
+
+CREATE TABLE IF NOT EXISTS portfolio_entries (
+  id TEXT PRIMARY KEY,
+  userId TEXT NOT NULL,
+  name TEXT NOT NULL,
+  kind TEXT NOT NULL CHECK (kind IN ('asset', 'liability')),
+  category TEXT NOT NULL,
+  currency TEXT NOT NULL CHECK (currency IN ('INR', 'USD', 'EUR')),
+  value REAL NOT NULL CHECK (value >= 0),
+  createdAt TEXT NOT NULL,
+  updatedAt TEXT NOT NULL,
+  FOREIGN KEY (userId) REFERENCES users(id) ON DELETE CASCADE
+);
 `);
 
 const decisionReportColumns = db.pragma(
@@ -64,6 +77,8 @@ CREATE INDEX IF NOT EXISTS idx_decision_reports_user_created
 ON decision_reports (userId, createdAt DESC);
 CREATE INDEX IF NOT EXISTS idx_decision_reports_goal
 ON decision_reports (userId, goalId, createdAt DESC);
+CREATE INDEX IF NOT EXISTS idx_portfolio_entries_user_updated
+ON portfolio_entries (userId, updatedAt DESC);
 `);
 
 export default db;

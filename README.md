@@ -14,6 +14,9 @@ The authenticated dashboard consolidates goal progress, decision reports, and
 goal-based monthly savings and allocation guidance. Recommendations are derived
 on demand from the current user's goals and are not stored.
 
+The portfolio workspace stores assets and liabilities and calculates net worth
+separately for each currency, avoiding misleading cross-currency totals.
+
 ## Local development
 
 Requirements: Dart 3.12.2, Node.js 22, and pnpm 11.
