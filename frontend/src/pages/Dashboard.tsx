@@ -4,7 +4,10 @@ import {
   DecisionReportSummary,
   Goal,
   Recommendations,
+  PortfolioEntry,
+  PortfolioSummary,
   getRecommendations,
+  listPortfolio,
   listDecisionReports,
   listGoals,
 } from '../api';
@@ -20,15 +23,19 @@ export default function Dashboard() {
   const [goals, setGoals] = useState<Goal[]>([]);
   const [reports, setReports] = useState<DecisionReportSummary[]>([]);
   const [recommendations, setRecommendations] = useState<Recommendations | null>(null);
+  const [portfolioEntries, setPortfolioEntries] = useState<PortfolioEntry[]>([]);
+  const [portfolioSummaries, setPortfolioSummaries] = useState<PortfolioSummary[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    Promise.all([listGoals(), listDecisionReports(), getRecommendations()])
-      .then(([goalResponse, reportResponse, recommendationResponse]) => {
+    Promise.all([listGoals(), listDecisionReports(), getRecommendations(), listPortfolio()])
+      .then(([goalResponse, reportResponse, recommendationResponse, portfolioResponse]) => {
         setGoals(goalResponse.data.goals);
         setReports(reportResponse.data.reports);
         setRecommendations(recommendationResponse.data.recommendations);
+        setPortfolioEntries(portfolioResponse.data.entries);
+        setPortfolioSummaries(portfolioResponse.data.summaries);
       })
       .catch((requestError) => setError(message(requestError)))
       .finally(() => setLoading(false));
@@ -68,6 +75,7 @@ export default function Dashboard() {
             <Link to="/goals"><span>Goal progress</span><strong>{summary.progress}%</strong><small>{summary.saved.toLocaleString()} of {summary.target.toLocaleString()}</small></Link>
             <Link to="/goals"><span>Active goals</span><strong>{goals.length}</strong><small>{nextGoal ? `Next: ${nextGoal.title}` : 'Add a target date to plan ahead'}</small></Link>
             <Link to="/reports"><span>Decision reports</span><strong>{reports.length}</strong><small>{summary.linkedReports} linked to goals</small></Link>
+            <Link to="/portfolio"><span>Portfolio entries</span><strong>{portfolioEntries.length}</strong><small>{portfolioSummaries.length === 1 ? `${portfolioSummaries[0].currency} ${portfolioSummaries[0].netWorth.toLocaleString()} net worth` : portfolioSummaries.length ? `${portfolioSummaries.length} currency summaries` : 'Add assets and liabilities'}</small></Link>
           </section>
 
           <div className="dashboard-grid">

@@ -24,6 +24,7 @@ export const openApiDocument = {
     { name: 'Recommendations' },
     { name: 'Decision reports' },
     { name: 'Financial health' },
+    { name: 'Portfolio' },
   ],
   paths: {
     '/openapi.json': {
@@ -151,6 +152,29 @@ export const openApiDocument = {
         responses: { 200: { description: 'Transparent 0-100 score and findings', content: json }, 400: errorResponses[400], 401: errorResponses[401], 503: { description: 'Calculation engine unavailable', content: json } },
       },
     },
+    '/api/v1/portfolio': {
+      get: {
+        tags: ['Portfolio'], summary: 'List portfolio entries and currency summaries', operationId: 'listPortfolio', security: bearerSecurity,
+        responses: { 200: { description: 'Portfolio entries and per-currency net worth', content: json }, 401: errorResponses[401] },
+      },
+      post: {
+        tags: ['Portfolio'], summary: 'Create a portfolio entry', operationId: 'createPortfolioEntry', security: bearerSecurity,
+        requestBody: { required: true, content: { 'application/json': { schema: { $ref: '#/components/schemas/PortfolioEntryInput' } } } },
+        responses: { 201: { description: 'Portfolio entry created', content: json }, 400: errorResponses[400], 401: errorResponses[401] },
+      },
+    },
+    '/api/v1/portfolio/{id}': {
+      parameters: [{ $ref: '#/components/parameters/ResourceId' }],
+      put: {
+        tags: ['Portfolio'], summary: 'Replace a portfolio entry', operationId: 'updatePortfolioEntry', security: bearerSecurity,
+        requestBody: { required: true, content: { 'application/json': { schema: { $ref: '#/components/schemas/PortfolioEntryInput' } } } },
+        responses: { 200: { description: 'Portfolio entry updated', content: json }, ...errorResponses },
+      },
+      delete: {
+        tags: ['Portfolio'], summary: 'Delete a portfolio entry', operationId: 'deletePortfolioEntry', security: bearerSecurity,
+        responses: { 204: { description: 'Portfolio entry deleted' }, 401: errorResponses[401], 404: errorResponses[404] },
+      },
+    },
     '/api/v1/decision-reports/{id}': {
       parameters: [{ $ref: '#/components/parameters/ResourceId' }],
       get: {
@@ -226,6 +250,10 @@ export const openApiDocument = {
           monthlyDebtPayments: { type: 'string', pattern: '^-?[0-9]+(?:\\.[0-9]+)?$' },
           monthlySavings: { type: 'string', pattern: '^-?[0-9]+(?:\\.[0-9]+)?$' },
         },
+      },
+      PortfolioEntryInput: {
+        type: 'object', required: ['name', 'kind', 'category', 'currency', 'value'], additionalProperties: false,
+        properties: { name: { type: 'string', minLength: 1, maxLength: 120 }, kind: { type: 'string', enum: ['asset', 'liability'] }, category: { type: 'string', minLength: 1, maxLength: 60 }, currency: { type: 'string', enum: ['INR', 'USD', 'EUR'] }, value: { type: 'number', minimum: 0, maximum: 1e15 } },
       },
     },
   },

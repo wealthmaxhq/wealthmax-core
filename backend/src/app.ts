@@ -6,6 +6,7 @@ import decisionReportsRouter from './routes/decisionReports';
 import { openApiDocument } from './openapi';
 import financialHealthRouter from './routes/financialHealth';
 import { jsonParseErrorHandler, secureResponseHeaders } from './lib/httpSecurity';
+import portfolioRouter from './routes/portfolio';
 
 const app = express();
 app.disable('x-powered-by');
@@ -19,5 +20,6 @@ app.use('/api/goals', goalsRouter);
 app.use('/api/v1/recommendations', recommendationsRouter);
 app.use('/api/v1/decision-reports', decisionReportsRouter);
 app.use('/api/v1/financial-health-score', financialHealthRouter);
+app.use('/api/v1/portfolio', portfolioRouter);
 
 export default app;

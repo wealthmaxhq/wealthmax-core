@@ -7,6 +7,7 @@ import DecisionReports from './pages/DecisionReports';
 import Dashboard from './pages/Dashboard';
 import Account from './pages/Account';
 import FinancialHealth from './pages/FinancialHealth';
+import Portfolio from './pages/Portfolio';
 import { useAuth } from './auth';
 
 function RequireAuth({ children }: { children: ReactNode }) {
@@ -43,6 +44,7 @@ export default function App() {
           <Link to="/reports">Decision reports</Link>
           <Link to="/goals">Goals</Link>
           <Link to="/financial-health">Financial health</Link>
+          <Link to="/portfolio">Portfolio</Link>
           {!ready ? null : user ? (
             <>
               <Link className="account-name" to="/account">{user.name || user.email}</Link>
@@ -66,6 +68,7 @@ export default function App() {
         <Route path="/goals" element={<RequireAuth><Goals /></RequireAuth>} />
         <Route path="/account" element={<RequireAuth><Account /></RequireAuth>} />
         <Route path="/financial-health" element={<RequireAuth><FinancialHealth /></RequireAuth>} />
+        <Route path="/portfolio" element={<RequireAuth><Portfolio /></RequireAuth>} />
         <Route path="/reports" element={<RequireAuth><DecisionReports /></RequireAuth>} />
         <Route path="/reports/:reportId" element={<RequireAuth><DecisionReports /></RequireAuth>} />
       </Routes>

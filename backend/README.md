@@ -67,6 +67,15 @@ inputs are decimal strings and share one declared `currency` (`INR`, `USD`, or
 `EUR`). The response contains the overall rating, three component scores,
 underlying ratios, and ordered actionable findings.
 
+## Portfolio API
+
+`GET /api/v1/portfolio` returns the authenticated user's assets and liabilities
+plus asset, liability, and net-worth totals grouped by currency. WealthMax never
+adds unlike currencies together. `POST /api/v1/portfolio` creates an entry;
+`PUT /api/v1/portfolio/:id` replaces one; and `DELETE /api/v1/portfolio/:id`
+removes one. Every operation is owner-scoped, and deleting an account also
+deletes its portfolio entries.
+
 ## Decision report API
 
 `POST /api/v1/decision-reports` runs the Dart financial engine and returns a
