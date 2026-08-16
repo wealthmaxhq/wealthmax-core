@@ -89,5 +89,24 @@ describe('Portfolio E2E', () => {
 
   test('requires authentication', async () => {
     expect((await request(app).get('/api/v1/portfolio')).status).toBe(401);
+    expect((await request(app).get('/api/v1/portfolio/export.csv')).status).toBe(401);
+  });
+
+  test('exports only the authenticated user portfolio as an Excel-compatible CSV', async () => {
+    const owner = await register('portfolio-export-owner@example.com');
+    const other = await register('portfolio-export-other@example.com');
+    await request(app).post('/api/v1/portfolio').set('Authorization', `Bearer ${owner.token}`)
+      .send({ name: '=Brokerage, "Primary"', kind: 'asset', category: 'Investments', currency: 'USD', value: 25000.5 });
+    await request(app).post('/api/v1/portfolio').set('Authorization', `Bearer ${other.token}`)
+      .send({ name: 'Private account', kind: 'asset', category: 'Cash', currency: 'EUR', value: 999 });
+
+    const exported = await request(app).get('/api/v1/portfolio/export.csv')
+      .set('Authorization', `Bearer ${owner.token}`);
+    expect(exported.status).toBe(200);
+    expect(exported.headers['content-type']).toContain('text/csv');
+    expect(exported.headers['content-disposition']).toBe('attachment; filename="wealthmax-portfolio.csv"');
+    expect(exported.text.startsWith('\uFEFFName,Type,Category,Currency,Value,Created at,Updated at\r\n')).toBe(true);
+    expect(exported.text).toContain('"\'=Brokerage, ""Primary""",asset,Investments,USD,25000.5');
+    expect(exported.text).not.toContain('Private account');
   });
 });

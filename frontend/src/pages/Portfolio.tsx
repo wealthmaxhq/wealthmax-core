@@ -2,6 +2,7 @@ import { FormEvent, useEffect, useState } from 'react';
 import {
   createPortfolioEntry,
   deletePortfolioEntry,
+  exportPortfolioCsv,
   getPortfolioHistory,
   listPortfolio,
   PortfolioEntry,
@@ -28,6 +29,7 @@ export default function Portfolio() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [exporting, setExporting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const refresh = async () => {
@@ -74,6 +76,19 @@ export default function Portfolio() {
     try { setHistory((await getPortfolioHistory(currency)).data.snapshots); }
     catch (requestError) { setError(message(requestError)); }
   };
+  const download = async () => {
+    setExporting(true); setError(null);
+    try {
+      const response = await exportPortfolioCsv();
+      const disposition = response.headers['content-disposition'] as string | undefined;
+      const filename = disposition?.match(/filename="([^"]+)"/)?.[1] ?? 'wealthmax-portfolio.csv';
+      const url = URL.createObjectURL(response.data);
+      const anchor = document.createElement('a');
+      anchor.href = url; anchor.download = filename;
+      document.body.appendChild(anchor); anchor.click(); anchor.remove(); URL.revokeObjectURL(url);
+    } catch (requestError) { setError(message(requestError)); }
+    finally { setExporting(false); }
+  };
   const values = history.map((snapshot) => snapshot.netWorth);
   const minimum = values.length ? Math.min(...values) : 0;
   const maximum = values.length ? Math.max(...values) : 0;
@@ -86,7 +101,7 @@ export default function Portfolio() {
   const latestSnapshot = history[history.length - 1];
 
   return <main>
-    <header className="page-header"><div><p className="eyebrow">Net worth</p><h1>Your portfolio</h1><p className="lede">Track assets and liabilities without combining unlike currencies.</p></div></header>
+    <header className="page-header"><div><p className="eyebrow">Net worth</p><h1>Your portfolio</h1><p className="lede">Track assets and liabilities without combining unlike currencies.</p></div><button className="primary-button header-action" disabled={loading || entries.length === 0 || exporting} onClick={() => void download()}>{exporting ? 'Exporting…' : 'Export CSV'}</button></header>
     {error && <div className="alert">{error}</div>}
     <section className="portfolio-summaries">
       {summaries.length ? summaries.map((summary) => <article key={summary.currency}>
