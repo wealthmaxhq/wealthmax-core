@@ -2,10 +2,12 @@ import { FormEvent, useEffect, useState } from 'react';
 import {
   createPortfolioEntry,
   deletePortfolioEntry,
+  getPortfolioHistory,
   listPortfolio,
   PortfolioEntry,
   PortfolioEntryInput,
   PortfolioSummary,
+  PortfolioSnapshot,
   updatePortfolioEntry,
 } from '../api';
 
@@ -20,6 +22,8 @@ function message(error: unknown) {
 export default function Portfolio() {
   const [entries, setEntries] = useState<PortfolioEntry[]>([]);
   const [summaries, setSummaries] = useState<PortfolioSummary[]>([]);
+  const [history, setHistory] = useState<PortfolioSnapshot[]>([]);
+  const [historyCurrency, setHistoryCurrency] = useState<PortfolioEntry['currency']>('INR');
   const [form, setForm] = useState<PortfolioForm>(emptyForm);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
@@ -32,6 +36,10 @@ export default function Portfolio() {
       const response = await listPortfolio();
       setEntries(response.data.entries);
       setSummaries(response.data.summaries);
+      const currency = response.data.summaries.some((item) => item.currency === historyCurrency)
+        ? historyCurrency : response.data.summaries[0]?.currency || 'INR';
+      setHistoryCurrency(currency);
+      setHistory((await getPortfolioHistory(currency)).data.snapshots);
     } catch (requestError) { setError(message(requestError)); }
     finally { setLoading(false); }
   };
@@ -61,6 +69,22 @@ export default function Portfolio() {
     catch (requestError) { setError(message(requestError)); }
   };
 
+  const selectHistoryCurrency = async (currency: PortfolioEntry['currency']) => {
+    setHistoryCurrency(currency);
+    try { setHistory((await getPortfolioHistory(currency)).data.snapshots); }
+    catch (requestError) { setError(message(requestError)); }
+  };
+  const values = history.map((snapshot) => snapshot.netWorth);
+  const minimum = values.length ? Math.min(...values) : 0;
+  const maximum = values.length ? Math.max(...values) : 0;
+  const span = maximum - minimum || 1;
+  const points = history.map((snapshot, index) => {
+    const x = history.length === 1 ? 50 : index / (history.length - 1) * 100;
+    const y = 92 - (snapshot.netWorth - minimum) / span * 84;
+    return `${x},${y}`;
+  }).join(' ');
+  const latestSnapshot = history[history.length - 1];
+
   return <main>
     <header className="page-header"><div><p className="eyebrow">Net worth</p><h1>Your portfolio</h1><p className="lede">Track assets and liabilities without combining unlike currencies.</p></div></header>
     {error && <div className="alert">{error}</div>}
@@ -70,6 +94,10 @@ export default function Portfolio() {
         <small>{summary.assets.toLocaleString()} assets · {summary.liabilities.toLocaleString()} liabilities</small>
       </article>) : <article><span>Net worth</span><strong>—</strong><small>Add your first asset or liability</small></article>}
     </section>
+    {summaries.length > 0 && <section className="panel portfolio-history">
+      <div className="section-heading"><div><p className="step">History</p><h2>Net-worth movement</h2></div><select aria-label="History currency" value={historyCurrency} onChange={(event) => void selectHistoryCurrency(event.target.value as PortfolioEntry['currency'])}>{summaries.map((summary) => <option key={summary.currency}>{summary.currency}</option>)}</select></div>
+      {history.length ? <><svg aria-label={`${historyCurrency} net-worth history`} preserveAspectRatio="none" role="img" viewBox="0 0 100 100"><polyline fill="none" points={points} vectorEffect="non-scaling-stroke" /></svg><div className="history-range"><span>{new Date(history[0].recordedAt).toLocaleDateString()}</span><strong>{historyCurrency} {latestSnapshot.netWorth.toLocaleString()}</strong><span>{new Date(latestSnapshot.recordedAt).toLocaleDateString()}</span></div></> : <p className="muted">Changes will appear after you update your portfolio.</p>}
+    </section>}
     <div className="portfolio-layout">
       <section className="panel goal-editor">
         <div className="section-heading"><div><p className="step">{editingId ? 'Editing' : 'New entry'}</p><h2>{editingId ? 'Update entry' : 'Add asset or liability'}</h2></div>{editingId && <button className="text-button" onClick={reset}>Cancel</button>}</div>

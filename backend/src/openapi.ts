@@ -175,6 +175,13 @@ export const openApiDocument = {
         responses: { 204: { description: 'Portfolio entry deleted' }, 401: errorResponses[401], 404: errorResponses[404] },
       },
     },
+    '/api/v1/portfolio/history': {
+      get: {
+        tags: ['Portfolio'], summary: 'Get portfolio net-worth history', operationId: 'getPortfolioHistory', security: bearerSecurity,
+        parameters: [{ name: 'currency', in: 'query', required: true, schema: { type: 'string', enum: ['INR', 'USD', 'EUR'] } }, { name: 'limit', in: 'query', schema: { type: 'integer', minimum: 1, maximum: 365, default: 90 } }],
+        responses: { 200: { description: 'Chronological per-currency portfolio snapshots', content: json }, 400: errorResponses[400], 401: errorResponses[401] },
+      },
+    },
     '/api/v1/decision-reports/{id}': {
       parameters: [{ $ref: '#/components/parameters/ResourceId' }],
       get: {

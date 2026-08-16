@@ -130,6 +130,11 @@ export interface PortfolioSummary {
   netWorth: number;
 }
 
+export interface PortfolioSnapshot extends PortfolioSummary {
+  id: string;
+  recordedAt: string;
+}
+
 const savedToken = localStorage.getItem('token');
 if (savedToken) setAuthToken(savedToken);
 
@@ -172,6 +177,12 @@ export function getRecommendations() {
 
 export function listPortfolio() {
   return api.get<{ apiVersion: 'v1'; entries: PortfolioEntry[]; summaries: PortfolioSummary[] }>('/api/v1/portfolio');
+}
+
+export function getPortfolioHistory(currency: PortfolioEntry['currency'], limit = 90) {
+  return api.get<{ apiVersion: 'v1'; currency: PortfolioEntry['currency']; snapshots: PortfolioSnapshot[] }>(
+    '/api/v1/portfolio/history', { params: { currency, limit } },
+  );
 }
 
 export function createPortfolioEntry(payload: PortfolioEntryInput) {

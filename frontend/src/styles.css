@@ -222,6 +222,12 @@ textarea { resize: vertical; }
 .portfolio-kind { border-radius: 999px; font-size: 10px; font-weight: 800; padding: 5px 8px; text-transform: uppercase; }
 .portfolio-kind.asset { background: #eaf6ef; color: #126c46; }
 .portfolio-kind.liability { background: #fff0ed; color: #a43b2b; }
+.portfolio-history { margin-bottom: 22px; }
+.portfolio-history .section-heading select { margin: 0; width: auto; }
+.portfolio-history svg { background: linear-gradient(#f6faf7, #fff); border-bottom: 1px solid #dfe7dc; height: 180px; overflow: visible; width: 100%; }
+.portfolio-history polyline { stroke: #168557; stroke-linecap: round; stroke-linejoin: round; stroke-width: 3; }
+.history-range { align-items: center; color: #77847b; display: flex; font-size: 11px; justify-content: space-between; padding-top: 12px; }
+.history-range strong { color: #17211b; font-size: 14px; }
 
 @media (max-width: 820px) {
   .account-grid { grid-template-columns: 1fr; }
