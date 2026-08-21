@@ -64,7 +64,7 @@ pnpm --filter wealth-planner-frontend run build
 ```
 
 Frontend behavior tests cover authentication restoration, financial-health
-calculation, goal management, and the portfolio workspace's history, CRUD,
-and export flows.
+calculation, dashboard aggregation, goal management, and the portfolio
+workspace's history, CRUD, and export flows.
 
 Use `NODE_ENV=test` and a test-only `JWT_SECRET` when running backend tests. CI never uses production secrets and does not deploy.
