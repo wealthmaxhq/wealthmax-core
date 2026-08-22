@@ -170,6 +170,8 @@ textarea { resize: vertical; }
 .success-alert { background: #eaf7ef; border: 1px solid #b9e2c9; border-radius: 10px; color: #126c46; margin-bottom: 20px; padding: 12px 14px; }
 .dashboard-header { align-items: end; display: flex; gap: 24px; justify-content: space-between; margin-bottom: 30px; }
 .dashboard-header .inline-button { flex: none; margin: 0; }
+.dashboard-alert { align-items: center; display: flex; gap: 18px; justify-content: space-between; }
+.dashboard-alert .text-button { flex: none; }
 .dashboard-metrics { display: grid; gap: 14px; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); margin-bottom: 22px; }
 .dashboard-metrics > a { background: #17251d; border-radius: 16px; color: #fff; padding: 22px; text-decoration: none; }
 .dashboard-metrics span, .dashboard-metrics small { color: #9eb1a5; display: block; }

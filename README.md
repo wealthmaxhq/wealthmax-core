@@ -12,7 +12,9 @@ The Node projects are managed as a pnpm workspace with a root `pnpm-lock.yaml`.
 
 The authenticated dashboard consolidates goal progress, decision reports, and
 goal-based monthly savings and allocation guidance. Recommendations are derived
-on demand from the current user's goals and are not stored.
+on demand from the current user's goals and are not stored. Dashboard services
+load independently, so available planning data remains visible during a partial
+service outage and failed requests can be retried in place.
 
 The portfolio workspace stores assets and liabilities and calculates net worth
 separately for each currency, avoiding misleading cross-currency totals.
