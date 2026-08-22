@@ -1,6 +1,6 @@
 import { FormEvent, useState } from 'react';
 import axios from 'axios';
-import { changePassword, deleteCurrentUser, updateCurrentUser } from '../api';
+import { changePassword, deleteCurrentUser, exportCurrentUserData, updateCurrentUser } from '../api';
 import { useAuth } from '../auth';
 
 function errorMessage(error: unknown): string {
@@ -26,6 +26,8 @@ export default function Account() {
   const [deletionConfirmation, setDeletionConfirmation] = useState('');
   const [deletionError, setDeletionError] = useState('');
   const [deleting, setDeleting] = useState(false);
+  const [exporting, setExporting] = useState(false);
+  const [exportError, setExportError] = useState('');
 
   async function saveProfile(event: FormEvent) {
     event.preventDefault();
@@ -80,6 +82,29 @@ export default function Account() {
     }
   }
 
+  async function downloadData() {
+    setExportError('');
+    setExporting(true);
+    try {
+      const response = await exportCurrentUserData();
+      const disposition = response.headers['content-disposition'] as string | undefined;
+      const filename = disposition?.match(/filename="([^"]+)"/)?.[1]
+        ?? 'wealthmax-account-data.json';
+      const url = URL.createObjectURL(response.data);
+      const anchor = document.createElement('a');
+      anchor.href = url;
+      anchor.download = filename;
+      document.body.appendChild(anchor);
+      anchor.click();
+      anchor.remove();
+      URL.revokeObjectURL(url);
+    } catch (error) {
+      setExportError(errorMessage(error));
+    } finally {
+      setExporting(false);
+    }
+  }
+
   return (
     <main>
       <header className="page-header">
@@ -109,9 +134,15 @@ export default function Account() {
             <button className="primary-button" disabled={savingPassword} type="submit">{savingPassword ? 'Changing…' : 'Change password'}</button>
           </form>
         </section>
+        <section className="panel account-card data-zone">
+          <h2>Your data</h2>
+          <p className="muted">Download a private JSON copy of your profile and all WealthMax planning records.</p>
+          {exportError && <div className="alert" role="alert">{exportError}</div>}
+          <button className="primary-button" disabled={exporting} type="button" onClick={() => void downloadData()}>{exporting ? 'Preparing export…' : 'Download my data'}</button>
+        </section>
         <section className="panel account-card danger-zone">
           <h2>Delete account</h2>
-          <p className="muted">Permanently delete your account, goals, and saved decision reports. This cannot be undone.</p>
+          <p className="muted">Permanently delete your account and all WealthMax planning data. This cannot be undone.</p>
           {deletionError && <div className="alert" role="alert">{deletionError}</div>}
           <form className="auth-form" onSubmit={deleteAccount}>
             <label>Current password<input autoComplete="current-password" maxLength={128} required type="password" value={deletionPassword} onChange={(event) => setDeletionPassword(event.target.value)} /></label>

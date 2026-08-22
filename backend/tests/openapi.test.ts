@@ -11,9 +11,9 @@ describe('OpenAPI contract', () => {
     const operations = Object.values(response.body.paths)
       .flatMap((path: any) => Object.entries(path))
       .filter(([method]) => ['get', 'post', 'put', 'patch', 'delete'].includes(method));
-    expect(operations).toHaveLength(29);
+    expect(operations).toHaveLength(30);
     expect(new Set(operations.map(([, operation]: any) => operation.operationId)).size)
-      .toBe(29);
+      .toBe(30);
 
     expect(response.body.paths['/api/auth/me'].delete.operationId)
       .toBe('deleteCurrentUser');

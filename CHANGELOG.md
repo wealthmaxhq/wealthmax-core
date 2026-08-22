@@ -2,6 +2,7 @@
 
 - Added authenticated planning workspaces for decision reports, goals,
   portfolios, financial-health history, and account security.
+- Added a private, versioned account-data export for user-owned planning data.
 - Added full-stack CI tiers, OpenAPI coverage, secure CSV exports, hardened HTTP
   defaults, and production database readiness checks.
 

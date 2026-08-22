@@ -64,10 +64,13 @@ for one backend process. Configure a shared `express-rate-limit` store before
 running multiple backend replicas so every instance enforces one global quota.
 
 - `GET /api/auth/me` returns the authenticated user's public profile.
+- `GET /api/auth/me/export` downloads a versioned JSON archive containing the
+  current user's profile and planning records. Password hashes, session
+  metadata, internal ownership columns, and other users' records are excluded.
 - `PATCH /api/auth/me` updates or clears the authenticated user's display name.
 - `DELETE /api/auth/me` requires the current password and the exact confirmation
-  value `DELETE`, then permanently removes the account, goals, and reports in
-  one transaction.
+  value `DELETE`, then permanently removes the account and all owned planning
+  data in one transaction.
 - `POST /api/auth/change-password` verifies the current password, stores a newly
   hashed replacement, revokes every existing token, and returns one replacement
   token for the current client. Deploying this migration also invalidates tokens

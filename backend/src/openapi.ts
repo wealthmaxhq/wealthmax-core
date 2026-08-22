@@ -102,6 +102,13 @@ export const openApiDocument = {
         responses: { 204: { description: 'Account and owned data deleted' }, 400: errorResponses[400], 401: errorResponses[401], 404: errorResponses[404] },
       },
     },
+    '/api/auth/me/export': {
+      get: {
+        tags: ['Authentication'], summary: 'Export all current account data', operationId: 'exportCurrentUserData', security: bearerSecurity,
+        description: 'Downloads a versioned JSON archive without password hashes, session metadata, or records owned by another user.',
+        responses: { 200: { description: 'Complete private account-data archive', content: { 'application/json': { schema: { type: 'object' } } } }, 401: errorResponses[401], 404: errorResponses[404] },
+      },
+    },
     '/api/auth/change-password': {
       post: {
         tags: ['Authentication'], summary: 'Change the current password', operationId: 'changePassword', security: bearerSecurity,
