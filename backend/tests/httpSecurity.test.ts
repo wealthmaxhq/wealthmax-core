@@ -1,7 +1,19 @@
 import request from 'supertest';
+import path from 'node:path';
 import app from '../src/app';
+import db, { resolveDatabasePath } from '../src/db';
 
 describe('HTTP security policy', () => {
+  test('uses durable SQLite settings and resolves configured storage paths', () => {
+    expect(resolveDatabasePath('storage/wealthmax.sqlite')).toBe(
+      path.resolve('storage/wealthmax.sqlite'),
+    );
+    expect(db.pragma('foreign_keys', { simple: true })).toBe(1);
+    expect(db.pragma('journal_mode', { simple: true })).toBe('wal');
+    expect(db.pragma('synchronous', { simple: true })).toBe(1);
+    expect(db.pragma('busy_timeout', { simple: true })).toBe(5000);
+  });
+
   test('sets restrictive headers without exposing the framework', async () => {
     const response = await request(app).get('/health');
 
@@ -16,6 +28,23 @@ describe('HTTP security policy', () => {
     expect(response.headers['referrer-policy']).toBe('no-referrer');
     expect(response.headers['x-content-type-options']).toBe('nosniff');
     expect(response.headers['x-frame-options']).toBe('DENY');
+  });
+
+  test('reports database readiness separately from process liveness', async () => {
+    const ready = await request(app).get('/ready');
+    expect(ready.status).toBe(200);
+    expect(ready.body).toEqual({ status: 'ready', database: 'available' });
+
+    const prepare = jest.spyOn(db, 'prepare').mockImplementationOnce(() => {
+      throw new Error('database unavailable');
+    });
+    const unavailable = await request(app).get('/ready');
+    expect(unavailable.status).toBe(503);
+    expect(unavailable.body).toEqual({ status: 'unavailable', database: 'unavailable' });
+    prepare.mockRestore();
+
+    const alive = await request(app).get('/health');
+    expect(alive.status).toBe(200);
   });
 
   test('prevents authenticated API responses from being cached', async () => {
