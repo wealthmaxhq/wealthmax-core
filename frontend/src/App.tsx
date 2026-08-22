@@ -1,4 +1,4 @@
-import React, { ReactNode } from 'react';
+import React, { ReactNode, useState } from 'react';
 import { Routes, Route, Link, Navigate, useLocation } from 'react-router-dom';
 import Login from './pages/Login';
 import Register from './pages/Register';
@@ -33,27 +33,38 @@ const landingPage = (
 
 export default function App() {
   const { user, ready, logout } = useAuth();
+  const [navigationOpen, setNavigationOpen] = useState(false);
+  const closeNavigation = () => setNavigationOpen(false);
+  const logOut = () => { closeNavigation(); logout(); };
   return (
     <div className="app-shell">
       <nav className="top-nav">
-        <Link className="brand" to="/">
+        <Link className="brand" to="/" onClick={closeNavigation}>
           <span className="brand-mark">W</span>
           <span>WealthMax</span>
         </Link>
-        <div className="nav-links">
-          <Link to="/reports">Decision reports</Link>
-          <Link to="/goals">Goals</Link>
-          <Link to="/financial-health">Financial health</Link>
-          <Link to="/portfolio">Portfolio</Link>
+        <button
+          aria-controls="primary-navigation"
+          aria-expanded={navigationOpen}
+          aria-label={navigationOpen ? 'Close navigation' : 'Open navigation'}
+          className="nav-toggle"
+          onClick={() => setNavigationOpen((open) => !open)}
+          type="button"
+        ><span aria-hidden="true">{navigationOpen ? '×' : '☰'}</span></button>
+        <div className={`nav-links${navigationOpen ? ' open' : ''}`} id="primary-navigation">
+          <Link to="/reports" onClick={closeNavigation}>Decision reports</Link>
+          <Link to="/goals" onClick={closeNavigation}>Goals</Link>
+          <Link to="/financial-health" onClick={closeNavigation}>Financial health</Link>
+          <Link to="/portfolio" onClick={closeNavigation}>Portfolio</Link>
           {!ready ? null : user ? (
             <>
-              <Link className="account-name" to="/account">{user.name || user.email}</Link>
-              <button className="nav-logout" type="button" onClick={logout}>Log out</button>
+              <Link className="account-name" to="/account" onClick={closeNavigation}>{user.name || user.email}</Link>
+              <button className="nav-logout" type="button" onClick={logOut}>Log out</button>
             </>
           ) : (
             <>
-              <Link to="/login">Login</Link>
-              <Link className="nav-cta" to="/register">Get started</Link>
+              <Link to="/login" onClick={closeNavigation}>Login</Link>
+              <Link className="nav-cta" to="/register" onClick={closeNavigation}>Get started</Link>
             </>
           )}
         </div>
