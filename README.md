@@ -8,6 +8,10 @@ WealthMax Core is the full-stack foundation for WealthMax Pro. It combines preci
 - **Backend API (`backend/`)** — an Express and TypeScript service for authentication, account management, goals, reports, and financial decision analysis.
 - **Frontend (`frontend/`)** — a React, TypeScript, and Vite application for authenticated financial planning workflows.
 
+The web interface includes an accessible responsive navigation menu so every
+planning workspace and account action remains reachable on phone and tablet
+layouts.
+
 The Node projects are managed as a pnpm workspace with a root `pnpm-lock.yaml`.
 
 The authenticated dashboard consolidates goal progress, decision reports, and
