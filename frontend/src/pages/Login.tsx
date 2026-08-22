@@ -17,7 +17,7 @@ export default function Login() {
     setSubmitting(true);
     setError(null);
     try {
-      const res = await login({ email, password });
+      const res = await login({ email: email.trim(), password });
       establishSession(res.data.token, res.data.user);
       const destination = (location.state as { from?: string } | null)?.from;
       nav(destination || '/reports', { replace: true });

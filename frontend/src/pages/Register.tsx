@@ -17,7 +17,12 @@ export default function Register() {
     setSubmitting(true);
     setError(null);
     try {
-      const res = await register({ email, password, name });
+      const normalizedName = name.trim();
+      const res = await register({
+        email: email.trim(),
+        password,
+        ...(normalizedName ? { name: normalizedName } : {}),
+      });
       establishSession(res.data.token, res.data.user);
       nav('/reports', { replace: true });
     } catch (err: unknown) {
