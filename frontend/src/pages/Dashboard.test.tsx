@@ -5,6 +5,7 @@ import Dashboard from './Dashboard';
 
 const api = vi.hoisted(() => ({
   getRecommendations: vi.fn(),
+  getFinancialHealthHistory: vi.fn(),
   listDecisionReports: vi.fn(),
   listGoals: vi.fn(),
   listPortfolio: vi.fn(),
@@ -49,6 +50,10 @@ describe('Dashboard', () => {
         { currency: 'USD', assets: 1000, liabilities: 0, netWorth: 1000 },
       ],
     } });
+    api.getFinancialHealthHistory.mockResolvedValue({ data: { snapshots: [{
+      id: 'health-1', currency: 'INR', score: 84, rating: 'good',
+      result: {}, recordedAt: '2026-08-05T00:00:00.000Z',
+    }] } });
   });
 
   test('consolidates goals, reports, portfolio, and recommendations accurately', async () => {
@@ -67,18 +72,22 @@ describe('Dashboard', () => {
     expect(screen.getByText((12500).toLocaleString())).toBeInTheDocument();
     expect(screen.getByText('Balanced')).toBeInTheDocument();
     expect(screen.getByText('60% stocks')).toBeInTheDocument();
+    expect(screen.getByText('84/100')).toBeInTheDocument();
+    expect(screen.getByText(/good ·/i)).toBeInTheDocument();
   });
 
   test('renders deliberate empty states without showing irrelevant recommendations', async () => {
     api.listGoals.mockResolvedValue({ data: { goals: [] } });
     api.listDecisionReports.mockResolvedValue({ data: { reports: [] } });
     api.listPortfolio.mockResolvedValue({ data: { entries: [], summaries: [] } });
+    api.getFinancialHealthHistory.mockResolvedValue({ data: { snapshots: [] } });
     renderDashboard();
 
     expect(await screen.findByText('No goals yet.')).toBeInTheDocument();
     expect(screen.getByText('No reports yet.')).toBeInTheDocument();
     expect(screen.getByText('Add assets and liabilities')).toBeInTheDocument();
     expect(screen.getByText('Add a target date to plan ahead')).toBeInTheDocument();
+    expect(screen.getByText('Complete your first check-in')).toBeInTheDocument();
     expect(screen.queryByRole('heading', { name: 'Fund your goals deliberately' })).not.toBeInTheDocument();
   });
 

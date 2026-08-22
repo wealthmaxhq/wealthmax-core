@@ -17,6 +17,10 @@ on demand from the current user's goals and are not stored.
 The portfolio workspace stores assets and liabilities and calculates net worth
 separately for each currency, avoiding misleading cross-currency totals.
 
+Financial-health calculations are saved as private account snapshots. The
+workspace restores the latest result, charts score history, and the dashboard
+surfaces the latest check-in so progress remains visible over time.
+
 ## Local development
 
 Requirements: Dart 3.12.2, Node.js 22, and pnpm 11.
@@ -64,7 +68,7 @@ pnpm --filter wealth-planner-frontend run build
 ```
 
 Frontend behavior tests cover authentication restoration, financial-health
-calculation, account security, authentication forms, dashboard aggregation,
+calculation and history, account security, authentication forms, dashboard aggregation,
 decision-report management, goal management, and the portfolio workspace's
 history, CRUD, and export flows.
 

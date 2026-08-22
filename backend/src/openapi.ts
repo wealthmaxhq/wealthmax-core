@@ -152,6 +152,13 @@ export const openApiDocument = {
         responses: { 200: { description: 'Transparent 0-100 score and findings', content: json }, 400: errorResponses[400], 401: errorResponses[401], 503: { description: 'Calculation engine unavailable', content: json } },
       },
     },
+    '/api/v1/financial-health-score/history': {
+      get: {
+        tags: ['Financial health'], summary: 'List financial health score history', operationId: 'listFinancialHealthScoreHistory', security: bearerSecurity,
+        parameters: [{ name: 'limit', in: 'query', schema: { type: 'integer', minimum: 1, maximum: 100, default: 12 } }],
+        responses: { 200: { description: 'Chronological financial health snapshots', content: json }, 400: errorResponses[400], 401: errorResponses[401] },
+      },
+    },
     '/api/v1/portfolio': {
       get: {
         tags: ['Portfolio'], summary: 'List portfolio entries and currency summaries', operationId: 'listPortfolio', security: bearerSecurity,
