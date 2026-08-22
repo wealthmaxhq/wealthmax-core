@@ -6,6 +6,7 @@ import Account from './Account';
 const api = vi.hoisted(() => ({
   changePassword: vi.fn(),
   deleteCurrentUser: vi.fn(),
+  exportCurrentUserData: vi.fn(),
   updateCurrentUser: vi.fn(),
 }));
 const auth = vi.hoisted(() => ({
@@ -82,6 +83,29 @@ describe('Account', () => {
     expect(currentPassword).toHaveValue('');
     expect(newPassword).toHaveValue('');
     expect(confirmation).toHaveValue('');
+  });
+
+  test('downloads the private account archive using the server filename', async () => {
+    const user = userEvent.setup();
+    const blob = new Blob(['{"exportVersion":1}'], { type: 'application/json' });
+    api.exportCurrentUserData.mockResolvedValue({
+      data: blob,
+      headers: { 'content-disposition': 'attachment; filename="my-wealthmax-data.json"' },
+    });
+    const createObjectURL = vi.fn(() => 'blob:account-data');
+    const revokeObjectURL = vi.fn();
+    Object.defineProperty(URL, 'createObjectURL', { configurable: true, value: createObjectURL });
+    Object.defineProperty(URL, 'revokeObjectURL', { configurable: true, value: revokeObjectURL });
+    const click = vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(() => {});
+    render(<Account />);
+
+    await user.click(screen.getByRole('button', { name: 'Download my data' }));
+
+    await waitFor(() => expect(api.exportCurrentUserData).toHaveBeenCalledOnce());
+    expect(createObjectURL).toHaveBeenCalledWith(blob);
+    expect(click).toHaveBeenCalledOnce();
+    expect(revokeObjectURL).toHaveBeenCalledWith('blob:account-data');
+    expect(screen.getByRole('button', { name: 'Download my data' })).toBeEnabled();
   });
 
   test('gates deletion, recovers from an API error, and logs out after success', async () => {

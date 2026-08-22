@@ -23,6 +23,10 @@ Financial-health calculations are saved as private account snapshots. The
 workspace restores the latest result, charts score history, and the dashboard
 surfaces the latest check-in so progress remains visible over time.
 
+Account settings provide a versioned JSON data export covering the user's
+profile, goals, decision reports, portfolio records, and financial-health
+history without credentials or internal session metadata.
+
 ## Local development
 
 Requirements: Dart 3.12.2, Node.js 22, and pnpm 11.

@@ -31,6 +31,67 @@ describe('Auth E2E', () => {
     expect(me.body.user.email).toBe(email);
   });
 
+  test('exports only the authenticated account data without credentials', async () => {
+    const registration = await request(app).post('/api/auth/register').send({
+      email: 'export-owner@example.com', password: 'password123', name: 'Export Owner',
+    });
+    const userId = registration.body.user.id as string;
+    const other = await request(app).post('/api/auth/register').send({
+      email: 'export-other@example.com', password: 'password123',
+    });
+    const now = '2026-08-22T08:00:00.000Z';
+    db.prepare(`INSERT INTO goals
+      (id, userId, title, targetAmount, currentAmount, createdAt)
+      VALUES (?, ?, ?, ?, ?, ?)`)
+      .run('export-goal', userId, 'Export goal', 1000, 250, now);
+    db.prepare(`INSERT INTO goals
+      (id, userId, title, targetAmount, currentAmount, createdAt)
+      VALUES (?, ?, ?, ?, ?, ?)`)
+      .run('other-goal', other.body.user.id, 'Private other goal', 9999, 0, now);
+    db.prepare(`INSERT INTO decision_reports
+      (id, userId, title, currency, schemaVersion, sourceFormulaId, snapshotJson, createdAt)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?)`)
+      .run('export-report', userId, 'Export report', 'INR', 1, 'REP-002', '{"result":"saved"}', now);
+    db.prepare(`INSERT INTO portfolio_entries
+      (id, userId, name, kind, category, currency, value, createdAt, updatedAt)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`)
+      .run('export-entry', userId, 'Savings', 'asset', 'Cash', 'INR', 500, now, now);
+    db.prepare(`INSERT INTO portfolio_snapshots
+      (id, userId, currency, assets, liabilities, netWorth, recordedAt)
+      VALUES (?, ?, ?, ?, ?, ?, ?)`)
+      .run('export-portfolio-snapshot', userId, 'INR', 500, 0, 500, now);
+    db.prepare(`INSERT INTO financial_health_snapshots
+      (id, userId, currency, score, rating, resultJson, recordedAt)
+      VALUES (?, ?, ?, ?, ?, ?, ?)`)
+      .run('export-health', userId, 'INR', 82, 'good', '{"score":82,"rating":"good"}', now);
+
+    expect((await request(app).get('/api/auth/me/export')).status).toBe(401);
+    const exported = await request(app).get('/api/auth/me/export')
+      .set('Authorization', `Bearer ${registration.body.token}`);
+
+    expect(exported.status).toBe(200);
+    expect(exported.headers['content-type']).toContain('application/json');
+    expect(exported.headers['content-disposition']).toBe(
+      'attachment; filename="wealthmax-account-data.json"',
+    );
+    expect(exported.body).toEqual(expect.objectContaining({
+      exportVersion: 1,
+      exportedAt: expect.any(String),
+      account: { id: userId, email: 'export-owner@example.com', name: 'Export Owner', createdAt: expect.any(String) },
+      goals: [expect.objectContaining({ id: 'export-goal', title: 'Export goal' })],
+      decisionReports: [expect.objectContaining({ id: 'export-report', report: { result: 'saved' } })],
+      portfolio: {
+        entries: [expect.objectContaining({ id: 'export-entry', name: 'Savings' })],
+        snapshots: [expect.objectContaining({ id: 'export-portfolio-snapshot', netWorth: 500 })],
+      },
+      financialHealthSnapshots: [expect.objectContaining({ id: 'export-health', result: { score: 82, rating: 'good' } })],
+    }));
+    const serialized = JSON.stringify(exported.body);
+    for (const excluded of ['passwordHash', 'sessionVersion', 'Private other goal', 'userId', 'snapshotJson', 'resultJson']) {
+      expect(serialized).not.toContain(excluded);
+    }
+  }, 30_000);
+
   test('normalizes identity and enforces registration policy', async () => {
     const registration = await request(app).post('/api/auth/register').send({
       email: '  Mixed.Case@Example.COM ',

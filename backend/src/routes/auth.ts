@@ -23,6 +23,7 @@ import {
   loginIpRateLimit,
   registrationRateLimit,
 } from '../lib/authRateLimits';
+import { accountDataExport, accountDataExportFilename } from '../lib/accountDataExport';
 
 const router = Router();
 
@@ -69,6 +70,15 @@ router.post('/login', loginIpRateLimit, loginAccountRateLimit, async (req, res) 
 
 router.get('/me', authMiddleware, (req, res) => {
   return res.json({ user: (req as AuthenticatedRequest).user });
+});
+
+router.get('/me/export', authMiddleware, (req, res) => {
+  const user = (req as AuthenticatedRequest).user!;
+  const data = accountDataExport(user.id);
+  if (!data) return res.status(404).json({ error: 'User not found' });
+  res.setHeader('Content-Type', 'application/json; charset=utf-8');
+  res.setHeader('Content-Disposition', `attachment; filename="${accountDataExportFilename}"`);
+  return res.send(JSON.stringify(data, null, 2));
 });
 
 router.patch('/me', authMiddleware, (req, res) => {

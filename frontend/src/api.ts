@@ -176,6 +176,10 @@ export function deleteCurrentUser(password: string, confirmation: string) {
   return api.delete<void>('/api/auth/me', { data: { password, confirmation } });
 }
 
+export function exportCurrentUserData() {
+  return api.get<Blob>('/api/auth/me/export', { responseType: 'blob' });
+}
+
 export function listGoals() {
   return api.get<{ goals: Goal[] }>('/api/goals');
 }
