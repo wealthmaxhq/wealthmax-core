@@ -31,9 +31,10 @@ describe('Financial health score E2E', () => {
   });
 
   test('returns transparent score components and metrics', async () => {
+    const authToken = await token();
     const response = await request(app)
       .post('/api/v1/financial-health-score')
-      .set('Authorization', `Bearer ${await token()}`)
+      .set('Authorization', `Bearer ${authToken}`)
       .send(input);
 
     expect(response.status).toBe(200);
@@ -53,6 +54,15 @@ describe('Financial health score E2E', () => {
       },
       findings: [],
     });
+
+    const history = await request(app)
+      .get('/api/v1/financial-health-score/history')
+      .set('Authorization', `Bearer ${authToken}`);
+    expect(history.status).toBe(200);
+    expect(history.body.snapshots).toHaveLength(1);
+    expect(history.body.snapshots[0]).toEqual(expect.objectContaining({
+      currency: 'INR', score: 100, rating: 'excellent', result: response.body,
+    }));
   }, 30_000);
 
   test('rejects non-string financial values', async () => {
@@ -62,5 +72,25 @@ describe('Financial health score E2E', () => {
       .send({ ...input, monthlySavings: 20000 });
     expect(response.status).toBe(400);
     expect(response.body.error).toContain('monthlySavings');
+  }, 30_000);
+
+  test('keeps history private and validates history limits', async () => {
+    const ownerToken = await token();
+    await request(app).post('/api/v1/financial-health-score')
+      .set('Authorization', `Bearer ${ownerToken}`).send(input);
+    const otherResponse = await request(app).post('/api/auth/register').send({
+      email: 'other-health@example.com', password: 'password123',
+    });
+
+    const privateHistory = await request(app)
+      .get('/api/v1/financial-health-score/history?limit=1')
+      .set('Authorization', `Bearer ${otherResponse.body.token}`);
+    expect(privateHistory.status).toBe(200);
+    expect(privateHistory.body.snapshots).toEqual([]);
+
+    const invalidLimit = await request(app)
+      .get('/api/v1/financial-health-score/history?limit=101')
+      .set('Authorization', `Bearer ${ownerToken}`);
+    expect(invalidLimit.status).toBe(400);
   }, 30_000);
 });

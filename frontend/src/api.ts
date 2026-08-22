@@ -96,6 +96,15 @@ export interface FinancialHealthResult {
   findings: Array<'buildEmergencyFund' | 'reduceDebtBurden' | 'increaseSavingsRate'>;
 }
 
+export interface FinancialHealthSnapshot {
+  id: string;
+  currency: FinancialHealthInput['currency'];
+  score: number;
+  rating: FinancialHealthResult['rating'];
+  result: FinancialHealthResult;
+  recordedAt: string;
+}
+
 export interface Recommendations {
   apiVersion: 'v1';
   savings: {
@@ -251,6 +260,12 @@ export function exportDecisionReportCsv(id: string) {
 
 export function calculateFinancialHealth(payload: FinancialHealthInput) {
   return api.post<FinancialHealthResult>('/api/v1/financial-health-score', payload);
+}
+
+export function getFinancialHealthHistory(limit = 12) {
+  return api.get<{ apiVersion: 'v1'; snapshots: FinancialHealthSnapshot[] }>(
+    '/api/v1/financial-health-score/history', { params: { limit } },
+  );
 }
 
 api.interceptors.response.use(

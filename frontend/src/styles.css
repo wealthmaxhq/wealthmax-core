@@ -94,6 +94,13 @@ textarea { resize: vertical; }
 .health-findings { border-top: 1px solid #3a4d41; color: #c9d5cd; padding-top: 20px; }
 .health-findings h3 { color: white; margin-top: 0; }
 .health-findings li, .health-findings p { font-size: 13px; line-height: 1.55; }
+.health-history { margin-top: 22px; }
+.health-history-chart { align-items: end; display: flex; gap: 12px; height: 190px; overflow-x: auto; padding: 8px 4px 0; }
+.health-history-point { align-items: center; display: grid; flex: 1 0 62px; grid-template-rows: 22px 1fr 24px; height: 100%; text-align: center; }
+.health-history-point strong { color: #126c46; font-size: 13px; }
+.health-history-point > span { align-self: end; background: linear-gradient(#36a871, #126c46); border-radius: 7px 7px 2px 2px; display: block; min-height: 4px; }
+.health-history-point small { color: #77847b; font-size: 9px; padding-top: 7px; white-space: nowrap; }
+.health-trend { border-top: 1px solid #e3e9e1; font-size: 12px; margin: 18px 0 0; padding-top: 14px; }
 .empty-state { color: #b9c9bf; padding: 70px 20px; text-align: center; }
 .empty-icon { align-items: center; border: 1px solid #496053; border-radius: 50%; display: inline-flex; font-size: 30px; height: 70px; justify-content: center; width: 70px; }
 .result-title { color: #b8c9bf; margin: 0 0 16px; }
@@ -163,7 +170,7 @@ textarea { resize: vertical; }
 .success-alert { background: #eaf7ef; border: 1px solid #b9e2c9; border-radius: 10px; color: #126c46; margin-bottom: 20px; padding: 12px 14px; }
 .dashboard-header { align-items: end; display: flex; gap: 24px; justify-content: space-between; margin-bottom: 30px; }
 .dashboard-header .inline-button { flex: none; margin: 0; }
-.dashboard-metrics { display: grid; gap: 14px; grid-template-columns: repeat(4, 1fr); margin-bottom: 22px; }
+.dashboard-metrics { display: grid; gap: 14px; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); margin-bottom: 22px; }
 .dashboard-metrics > a { background: #17251d; border-radius: 16px; color: #fff; padding: 22px; text-decoration: none; }
 .dashboard-metrics span, .dashboard-metrics small { color: #9eb1a5; display: block; }
 .dashboard-metrics span { font-size: 11px; margin-bottom: 9px; text-transform: uppercase; }

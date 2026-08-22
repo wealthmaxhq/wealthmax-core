@@ -1,8 +1,10 @@
-import { FormEvent, useState } from 'react';
+import { FormEvent, useEffect, useState } from 'react';
 import {
   calculateFinancialHealth,
+  FinancialHealthSnapshot,
   FinancialHealthInput,
   FinancialHealthResult,
+  getFinancialHealthHistory,
 } from '../api';
 
 const initialInput: FinancialHealthInput = {
@@ -38,6 +40,17 @@ export default function FinancialHealth() {
   const [result, setResult] = useState<FinancialHealthResult | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [history, setHistory] = useState<FinancialHealthSnapshot[]>([]);
+
+  useEffect(() => {
+    getFinancialHealthHistory()
+      .then((response) => {
+        setHistory(response.data.snapshots);
+        const latest = response.data.snapshots[response.data.snapshots.length - 1];
+        if (latest) setResult(latest.result);
+      })
+      .catch((requestError) => setError(errorMessage(requestError)));
+  }, []);
 
   async function submit(event: FormEvent) {
     event.preventDefault();
@@ -46,6 +59,8 @@ export default function FinancialHealth() {
     try {
       const response = await calculateFinancialHealth(input);
       setResult(response.data);
+      const historyResponse = await getFinancialHealthHistory();
+      setHistory(historyResponse.data.snapshots);
     } catch (requestError) {
       setError(errorMessage(requestError));
     } finally {
@@ -95,6 +110,29 @@ export default function FinancialHealth() {
           )}
         </section>
       </div>
+      {history.length > 0 && (
+        <section className="panel health-history">
+          <div className="section-heading">
+            <div><p className="step">Progress</p><h2>Score history</h2></div>
+            <span className="badge">{history.length} {history.length === 1 ? 'check-in' : 'check-ins'}</span>
+          </div>
+          <div className="health-history-chart" aria-label="Financial health score history">
+            {history.map((snapshot) => (
+              <div key={snapshot.id} className="health-history-point">
+                <strong>{snapshot.score}</strong>
+                <span style={{ height: `${Math.max(snapshot.score, 4)}%` }} />
+                <small>{new Date(snapshot.recordedAt).toLocaleDateString()}</small>
+              </div>
+            ))}
+          </div>
+          {history.length > 1 && (
+            <p className="muted health-trend">
+              Your score has {history[history.length - 1].score >= history[0].score ? 'improved' : 'changed'} by{' '}
+              <strong>{Math.abs(history[history.length - 1].score - history[0].score)} points</strong> across this period.
+            </p>
+          )}
+        </section>
+      )}
     </main>
   );
 }

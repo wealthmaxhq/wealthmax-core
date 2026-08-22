@@ -74,6 +74,17 @@ CREATE TABLE IF NOT EXISTS portfolio_snapshots (
   recordedAt TEXT NOT NULL,
   FOREIGN KEY (userId) REFERENCES users(id) ON DELETE CASCADE
 );
+
+CREATE TABLE IF NOT EXISTS financial_health_snapshots (
+  id TEXT PRIMARY KEY,
+  userId TEXT NOT NULL,
+  currency TEXT NOT NULL CHECK (currency IN ('INR', 'USD', 'EUR')),
+  score INTEGER NOT NULL CHECK (score >= 0 AND score <= 100),
+  rating TEXT NOT NULL,
+  resultJson TEXT NOT NULL,
+  recordedAt TEXT NOT NULL,
+  FOREIGN KEY (userId) REFERENCES users(id) ON DELETE CASCADE
+);
 `);
 
 const decisionReportColumns = db.pragma(
@@ -92,6 +103,8 @@ CREATE INDEX IF NOT EXISTS idx_portfolio_entries_user_updated
 ON portfolio_entries (userId, updatedAt DESC);
 CREATE INDEX IF NOT EXISTS idx_portfolio_snapshots_user_currency_recorded
 ON portfolio_snapshots (userId, currency, recordedAt DESC);
+CREATE INDEX IF NOT EXISTS idx_financial_health_snapshots_user_recorded
+ON financial_health_snapshots (userId, recordedAt DESC);
 `);
 
 export default db;

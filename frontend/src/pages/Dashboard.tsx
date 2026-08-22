@@ -6,6 +6,8 @@ import {
   Recommendations,
   PortfolioEntry,
   PortfolioSummary,
+  FinancialHealthSnapshot,
+  getFinancialHealthHistory,
   getRecommendations,
   listPortfolio,
   listDecisionReports,
@@ -25,17 +27,20 @@ export default function Dashboard() {
   const [recommendations, setRecommendations] = useState<Recommendations | null>(null);
   const [portfolioEntries, setPortfolioEntries] = useState<PortfolioEntry[]>([]);
   const [portfolioSummaries, setPortfolioSummaries] = useState<PortfolioSummary[]>([]);
+  const [latestHealth, setLatestHealth] = useState<FinancialHealthSnapshot | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    Promise.all([listGoals(), listDecisionReports(), getRecommendations(), listPortfolio()])
-      .then(([goalResponse, reportResponse, recommendationResponse, portfolioResponse]) => {
+    Promise.all([listGoals(), listDecisionReports(), getRecommendations(), listPortfolio(), getFinancialHealthHistory(1)])
+      .then(([goalResponse, reportResponse, recommendationResponse, portfolioResponse, healthResponse]) => {
         setGoals(goalResponse.data.goals);
         setReports(reportResponse.data.reports);
         setRecommendations(recommendationResponse.data.recommendations);
         setPortfolioEntries(portfolioResponse.data.entries);
         setPortfolioSummaries(portfolioResponse.data.summaries);
+        const healthSnapshots = healthResponse.data.snapshots;
+        setLatestHealth(healthSnapshots[healthSnapshots.length - 1] ?? null);
       })
       .catch((requestError) => setError(message(requestError)))
       .finally(() => setLoading(false));
@@ -76,6 +81,7 @@ export default function Dashboard() {
             <Link to="/goals"><span>Active goals</span><strong>{goals.length}</strong><small>{nextGoal ? `Next: ${nextGoal.title}` : 'Add a target date to plan ahead'}</small></Link>
             <Link to="/reports"><span>Decision reports</span><strong>{reports.length}</strong><small>{summary.linkedReports} linked to goals</small></Link>
             <Link to="/portfolio"><span>Portfolio entries</span><strong>{portfolioEntries.length}</strong><small>{portfolioSummaries.length === 1 ? `${portfolioSummaries[0].currency} ${portfolioSummaries[0].netWorth.toLocaleString()} net worth` : portfolioSummaries.length ? `${portfolioSummaries.length} currency summaries` : 'Add assets and liabilities'}</small></Link>
+            <Link to="/financial-health"><span>Financial health</span><strong>{latestHealth ? `${latestHealth.score}/100` : '—'}</strong><small>{latestHealth ? `${latestHealth.rating.replace(/([A-Z])/g, ' $1')} · ${new Date(latestHealth.recordedAt).toLocaleDateString()}` : 'Complete your first check-in'}</small></Link>
           </section>
 
           <div className="dashboard-grid">
