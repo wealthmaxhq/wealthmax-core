@@ -2,10 +2,19 @@ import Database from 'better-sqlite3';
 import path from 'path';
 import fs from 'fs';
 
-const DB_PATH = path.join(__dirname, '..', '..', 'data', 'db.sqlite');
-fs.mkdirSync(path.dirname(DB_PATH), { recursive: true });
-const db = new Database(DB_PATH);
+export function resolveDatabasePath(configuredPath = process.env.WEALTHMAX_DB_PATH): string {
+  return configuredPath?.trim()
+    ? path.resolve(configuredPath.trim())
+    : path.join(__dirname, '..', '..', 'data', 'db.sqlite');
+}
+
+export const databasePath = resolveDatabasePath();
+fs.mkdirSync(path.dirname(databasePath), { recursive: true });
+const db = new Database(databasePath);
 db.pragma('foreign_keys = ON');
+db.pragma('journal_mode = WAL');
+db.pragma('synchronous = NORMAL');
+db.pragma('busy_timeout = 5000');
 
 // Users table
 db.exec(`

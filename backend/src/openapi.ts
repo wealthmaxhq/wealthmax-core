@@ -43,6 +43,17 @@ export const openApiDocument = {
         responses: { 200: { description: 'Service is healthy', content: json } },
       },
     },
+    '/ready': {
+      get: {
+        tags: ['System'],
+        summary: 'Check service and database readiness',
+        operationId: 'getReadiness',
+        responses: {
+          200: { description: 'Service is ready to receive traffic', content: json },
+          503: { description: 'Required database is unavailable', content: json },
+        },
+      },
+    },
     '/api/auth/register': {
       post: {
         tags: ['Authentication'],

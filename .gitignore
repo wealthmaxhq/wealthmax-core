@@ -30,6 +30,8 @@ coverage/
 # Local databases and logs
 *.sqlite
 *.sqlite-journal
+*.sqlite-shm
+*.sqlite-wal
 *.log
 
 .flutter-plugins

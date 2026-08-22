@@ -12,6 +12,20 @@ URL into an OpenAPI-compatible client or documentation viewer. The contract is
 kept dependency-free and is covered by an integration test that checks route
 coverage and unique operation identifiers.
 
+## Production readiness and storage
+
+`GET /health` is a lightweight process-liveness probe. `GET /ready` verifies
+that SQLite can answer a query and returns HTTP 503 when the data layer is not
+available; production traffic should only be routed to ready instances.
+
+Data defaults to `data/db.sqlite` at the repository root. Set
+`WEALTHMAX_DB_PATH` to an explicit persistent-volume path in production. The
+parent directory is created automatically. SQLite uses foreign-key enforcement,
+write-ahead logging, normal synchronous durability, and a five-second busy
+timeout. Back up the database and its WAL consistently using a SQLite-aware
+backup process. The server handles SIGTERM and SIGINT by stopping new requests,
+waiting for active requests to finish, and closing the database connection.
+
 ## Goal recommendations API
 
 `GET /api/v1/recommendations` turns the authenticated user's goals into a
@@ -62,10 +76,12 @@ running multiple backend replicas so every instance enforces one global quota.
 ## Financial health API
 
 `POST /api/v1/financial-health-score` calculates the authenticated user's
-transparent 0–100 score without storing the supplied financial data. Monetary
-inputs are decimal strings and share one declared `currency` (`INR`, `USD`, or
-`EUR`). The response contains the overall rating, three component scores,
-underlying ratios, and ordered actionable findings.
+transparent 0–100 score and stores the result as a private progress snapshot.
+Monetary inputs are decimal strings and share one declared `currency` (`INR`,
+`USD`, or `EUR`). The response contains the overall rating, three component
+scores, underlying ratios, and ordered actionable findings. Raw submitted input
+fields are not stored. `GET /api/v1/financial-health-score/history` returns up
+to 12 chronological snapshots by default; `limit` accepts 1 through 100.
 
 ## Portfolio API
 

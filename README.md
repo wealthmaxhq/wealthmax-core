@@ -42,6 +42,9 @@ pnpm --filter wealth-planner-frontend run dev
 ```
 
 The backend requires a `JWT_SECRET` of at least 32 characters. Keep production secrets outside the repository.
+Set `WEALTHMAX_DB_PATH` to a persistent-volume location for production data.
+Use `/health` for process liveness and `/ready` for traffic readiness; readiness
+includes a database query.
 
 ## Continuous integration
 
