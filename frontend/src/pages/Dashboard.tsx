@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import {
   DecisionReportSummary,
@@ -31,20 +31,37 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    Promise.all([listGoals(), listDecisionReports(), getRecommendations(), listPortfolio(), getFinancialHealthHistory(1)])
-      .then(([goalResponse, reportResponse, recommendationResponse, portfolioResponse, healthResponse]) => {
-        setGoals(goalResponse.data.goals);
-        setReports(reportResponse.data.reports);
-        setRecommendations(recommendationResponse.data.recommendations);
-        setPortfolioEntries(portfolioResponse.data.entries);
-        setPortfolioSummaries(portfolioResponse.data.summaries);
-        const healthSnapshots = healthResponse.data.snapshots;
-        setLatestHealth(healthSnapshots[healthSnapshots.length - 1] ?? null);
-      })
-      .catch((requestError) => setError(message(requestError)))
-      .finally(() => setLoading(false));
+  const loadDashboard = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    const results = await Promise.allSettled([
+      listGoals(), listDecisionReports(), getRecommendations(), listPortfolio(),
+      getFinancialHealthHistory(1),
+    ]);
+    const [goalResult, reportResult, recommendationResult, portfolioResult, healthResult] = results;
+    if (goalResult.status === 'fulfilled') setGoals(goalResult.value.data.goals);
+    if (reportResult.status === 'fulfilled') setReports(reportResult.value.data.reports);
+    if (recommendationResult.status === 'fulfilled') {
+      setRecommendations(recommendationResult.value.data.recommendations);
+    }
+    if (portfolioResult.status === 'fulfilled') {
+      setPortfolioEntries(portfolioResult.value.data.entries);
+      setPortfolioSummaries(portfolioResult.value.data.summaries);
+    }
+    if (healthResult.status === 'fulfilled') {
+      const healthSnapshots = healthResult.value.data.snapshots;
+      setLatestHealth(healthSnapshots[healthSnapshots.length - 1] ?? null);
+    }
+    const failures = results
+      .filter((result): result is PromiseRejectedResult => result.status === 'rejected')
+      .map((result) => message(result.reason));
+    if (failures.length) {
+      setError(`${failures.length === 1 ? failures[0] : `${failures.length} dashboard services could not be loaded.`} Your available planning data is shown below.`);
+    }
+    setLoading(false);
   }, []);
+
+  useEffect(() => { void loadDashboard(); }, [loadDashboard]);
 
   const summary = useMemo(() => {
     const target = goals.reduce((total, goal) => total + goal.targetAmount, 0);
@@ -73,7 +90,7 @@ export default function Dashboard() {
         <Link className="primary-button inline-button" to="/reports">New decision report</Link>
       </header>
 
-      {error && <div className="alert">{error}</div>}
+      {error && <div className="alert dashboard-alert" role="alert"><span>{error}</span><button className="text-button" type="button" onClick={() => void loadDashboard()}>Retry</button></div>}
       {loading ? <section className="panel"><p className="muted">Loading your plan…</p></section> : (
         <>
           <section className="dashboard-metrics">

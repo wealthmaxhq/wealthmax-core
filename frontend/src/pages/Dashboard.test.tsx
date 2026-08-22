@@ -1,5 +1,6 @@
 import { render, screen } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
+import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 import Dashboard from './Dashboard';
 
@@ -91,13 +92,34 @@ describe('Dashboard', () => {
     expect(screen.queryByRole('heading', { name: 'Fund your goals deliberately' })).not.toBeInTheDocument();
   });
 
-  test('surfaces API errors and exits the loading state safely', async () => {
-    api.listPortfolio.mockRejectedValue({ response: { data: { error: 'Portfolio service is unavailable.' } } });
+  test('keeps successful planning data visible and retries a failed service', async () => {
+    const user = userEvent.setup();
+    api.listPortfolio.mockRejectedValueOnce({ response: { data: { error: 'Portfolio service is unavailable.' } } });
     renderDashboard();
 
-    expect(await screen.findByText('Portfolio service is unavailable.')).toBeInTheDocument();
+    expect(await screen.findByRole('alert')).toHaveTextContent('Portfolio service is unavailable.');
+    expect(screen.getByRole('alert')).toHaveTextContent('available planning data is shown below');
     expect(screen.queryByText('Loading your plan…')).not.toBeInTheDocument();
-    expect(screen.getByText('No goals yet.')).toBeInTheDocument();
-    expect(screen.getByText('No reports yet.')).toBeInTheDocument();
+    expect(screen.getByText('Home deposit')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /Mortgage choice/ })).toBeInTheDocument();
+    expect(screen.getByText('Balanced')).toBeInTheDocument();
+    expect(screen.getByText('84/100')).toBeInTheDocument();
+    expect(screen.getByText('Add assets and liabilities')).toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: 'Retry' }));
+
+    expect(await screen.findByText('2 currency summaries')).toBeInTheDocument();
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+    expect(api.listPortfolio).toHaveBeenCalledTimes(2);
+  });
+
+  test('uses a stable summary when multiple dashboard services fail', async () => {
+    api.listGoals.mockRejectedValue(new Error('goals failed'));
+    api.listDecisionReports.mockRejectedValue(new Error('reports failed'));
+    renderDashboard();
+
+    expect(await screen.findByRole('alert')).toHaveTextContent('2 dashboard services could not be loaded.');
+    expect(screen.getByText('2 currency summaries')).toBeInTheDocument();
+    expect(screen.getByText('84/100')).toBeInTheDocument();
   });
 });
