@@ -3,6 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
+    "release:verify": "node scripts/verify-release.js",
     "start:backend": "cd backend && npm run start",
     "dev:backend": "cd backend && npm run dev"
   }

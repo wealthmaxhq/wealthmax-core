@@ -1,5 +1,7 @@
 ## Unreleased
 
+## 0.1.0 - 2026-08-26
+
 - Added authenticated planning workspaces for decision reports, goals,
   portfolios, financial-health history, and account security.
 - Added a private, versioned account-data export for user-owned planning data.

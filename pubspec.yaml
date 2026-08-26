@@ -1,6 +1,6 @@
 name: wealthmax_core
 description: Precise financial primitives and calculation infrastructure for WealthMax Pro.
-version: 0.1.0-dev.1
+version: 0.1.0
 publish_to: none
 
 environment:
