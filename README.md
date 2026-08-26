@@ -86,3 +86,18 @@ decision-report management, goal management, and the portfolio workspace's
 history, CRUD, and export flows.
 
 Use `NODE_ENV=test` and a test-only `JWT_SECRET` when running backend tests. CI never uses production secrets and does not deploy.
+
+## Releases
+
+All package versions and the changelog are checked for alignment in CI. To
+publish a release, create a semantic version tag such as `v0.1.0` on a commit
+already contained in `main`, then push the tag. The release workflow reruns the
+complete Dart, backend, and frontend validation suites before publishing:
+
+- a static frontend bundle;
+- a compiled backend bundle with its production package manifest;
+- the Dart financial SDK source package; and
+- SHA-256 checksums for every archive.
+
+The workflow never publishes an untested artifact and rejects tags that do not
+match the repository package versions or changelog.

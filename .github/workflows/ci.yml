@@ -153,6 +153,9 @@ jobs:
       - name: Type-check backend
         run: pnpm --filter wealth-planner-backend run typecheck
 
+      - name: Verify release metadata stays aligned
+        run: node scripts/verify-release.js
+
       - name: Build backend
         run: pnpm --filter wealth-planner-backend run build
 
