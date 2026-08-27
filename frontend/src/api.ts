@@ -172,6 +172,10 @@ export function changePassword(data: { currentPassword: string; newPassword: str
   return api.post<AuthResponse>('/api/auth/change-password', data);
 }
 
+export function revokeAllSessions() {
+  return api.post<void>('/api/auth/logout-all');
+}
+
 export function deleteCurrentUser(password: string, confirmation: string) {
   return api.delete<void>('/api/auth/me', { data: { password, confirmation } });
 }

@@ -116,6 +116,13 @@ export const openApiDocument = {
         responses: { 200: { description: 'Password changed and replacement session issued', content: { 'application/json': { schema: { $ref: '#/components/schemas/AuthResponse' } } } }, 400: errorResponses[400], 401: errorResponses[401] },
       },
     },
+    '/api/auth/logout-all': {
+      post: {
+        tags: ['Authentication'], summary: 'Revoke every active session', operationId: 'revokeAllSessions', security: bearerSecurity,
+        description: 'Invalidates every bearer token issued for the current account, including the token used for this request.',
+        responses: { 204: { description: 'All sessions revoked' }, 401: errorResponses[401], 404: errorResponses[404] },
+      },
+    },
     '/api/goals': {
       get: {
         tags: ['Goals'], summary: 'List goals', operationId: 'listGoals', security: bearerSecurity,

@@ -7,6 +7,7 @@ const api = vi.hoisted(() => ({
   changePassword: vi.fn(),
   deleteCurrentUser: vi.fn(),
   exportCurrentUserData: vi.fn(),
+  revokeAllSessions: vi.fn(),
   updateCurrentUser: vi.fn(),
 }));
 const auth = vi.hoisted(() => ({
@@ -106,6 +107,24 @@ describe('Account', () => {
     expect(click).toHaveBeenCalledOnce();
     expect(revokeObjectURL).toHaveBeenCalledWith('blob:account-data');
     expect(screen.getByRole('button', { name: 'Download my data' })).toBeEnabled();
+  });
+
+  test('revokes every server session before clearing local authentication', async () => {
+    const user = userEvent.setup();
+    api.revokeAllSessions
+      .mockRejectedValueOnce({ response: { data: { error: 'Session service unavailable.' } } })
+      .mockResolvedValueOnce({});
+    render(<Account />);
+
+    const button = screen.getByRole('button', { name: 'Sign out everywhere' });
+    await user.click(button);
+    expect(await screen.findByRole('alert')).toHaveTextContent('Session service unavailable.');
+    expect(button).toBeEnabled();
+    expect(auth.logout).not.toHaveBeenCalled();
+
+    await user.click(button);
+    await waitFor(() => expect(api.revokeAllSessions).toHaveBeenCalledTimes(2));
+    expect(auth.logout).toHaveBeenCalledOnce();
   });
 
   test('gates deletion, recovers from an API error, and logs out after success', async () => {

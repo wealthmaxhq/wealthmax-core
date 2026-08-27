@@ -187,6 +187,31 @@ describe('Auth E2E', () => {
     expect(newLogin.status).toBe(200);
   }, 30_000);
 
+  test('revokes every issued session while preserving account credentials', async () => {
+    const email = 'sessions@example.com';
+    const password = 'session-password';
+    const registration = await request(app).post('/api/auth/register').send({ email, password });
+    const secondSession = await request(app).post('/api/auth/login').send({ email, password });
+    const firstAuthorization = `Bearer ${registration.body.token}`;
+    const secondAuthorization = `Bearer ${secondSession.body.token}`;
+
+    expect((await request(app).post('/api/auth/logout-all')).status).toBe(401);
+    const revoked = await request(app).post('/api/auth/logout-all')
+      .set('Authorization', firstAuthorization);
+    expect(revoked.status).toBe(204);
+    expect(revoked.body).toEqual({});
+
+    expect((await request(app).get('/api/auth/me')
+      .set('Authorization', firstAuthorization)).status).toBe(401);
+    expect((await request(app).get('/api/auth/me')
+      .set('Authorization', secondAuthorization)).status).toBe(401);
+
+    const signedInAgain = await request(app).post('/api/auth/login').send({ email, password });
+    expect(signedInAgain.status).toBe(200);
+    expect((await request(app).get('/api/auth/me')
+      .set('Authorization', `Bearer ${signedInAgain.body.token}`)).status).toBe(200);
+  }, 30_000);
+
   test('requires reauthentication and deletes all owned data atomically', async () => {
     const email = 'delete-me@example.com';
     const password = 'delete-password';

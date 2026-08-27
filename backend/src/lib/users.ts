@@ -55,6 +55,12 @@ export function updateUserPasswordAndRevokeSessions(
   return result.changes === 0 ? undefined : findUserById(id);
 }
 
+export function revokeAllUserSessions(id: string): boolean {
+  return db.prepare(`UPDATE users
+    SET sessionVersion = sessionVersion + 1
+    WHERE id = ?`).run(id).changes === 1;
+}
+
 export function deleteUserAndOwnedData(id: string): boolean {
   return db.transaction(() => {
     const exists = db.prepare('SELECT 1 FROM users WHERE id = ?').get(id);

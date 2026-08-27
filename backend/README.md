@@ -75,6 +75,8 @@ running multiple backend replicas so every instance enforces one global quota.
   hashed replacement, revokes every existing token, and returns one replacement
   token for the current client. Deploying this migration also invalidates tokens
   issued before session versioning was introduced.
+- `POST /api/auth/logout-all` immediately revokes every bearer token issued for
+  the current account without changing its password or deleting planning data.
 
 ## Financial health API
 

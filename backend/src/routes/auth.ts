@@ -5,6 +5,7 @@ import {
   deleteUserAndOwnedData,
   findUserByEmail,
   findUserById,
+  revokeAllUserSessions,
   updateUserName,
   updateUserPasswordAndRevokeSessions,
 } from '../lib/users';
@@ -147,6 +148,14 @@ router.post('/change-password', authMiddleware, async (req, res) => {
     token: signToken(updatedUser),
     user: { id: updatedUser.id, email: updatedUser.email, name: updatedUser.name },
   });
+});
+
+router.post('/logout-all', authMiddleware, (req, res) => {
+  const authenticatedUser = (req as AuthenticatedRequest).user!;
+  if (!revokeAllUserSessions(authenticatedUser.id)) {
+    return res.status(404).json({ error: 'User not found' });
+  }
+  return res.status(204).send();
 });
 
 export default router;

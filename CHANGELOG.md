@@ -1,5 +1,7 @@
 ## Unreleased
 
+- Added authenticated global session revocation with an account security control.
+
 ## 0.1.0 - 2026-08-26
 
 - Added authenticated planning workspaces for decision reports, goals,
