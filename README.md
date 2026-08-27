@@ -59,7 +59,7 @@ includes a database query.
 
 ## Continuous integration
 
-The full-stack CI workflow runs for every pull request and push to `main`. Dart validation is split into parallel formatting/analysis, core financial tests, and calculation-heavy decision/reporting tests. Backend validation is also parallelized into typecheck/build, fast API tests, and Dart-bridge integration tests, so ordinary API failures return without waiting for the calculation engine. The tier manifest is checked in CI so every backend test belongs to exactly one tier. Frontend validation runs independently, and superseded runs on the same branch are cancelled automatically.
+The full-stack CI workflow runs for every pull request and push to `main`. Dart validation is split into parallel formatting/analysis, core financial tests, and calculation-heavy decision/reporting tests. Backend validation is also parallelized into typecheck/build, fast API tests, and Dart-bridge integration tests, so ordinary API failures return without waiting for the calculation engine. The tier manifest is checked in CI so every backend test belongs to exactly one tier. Frontend validation runs independently, and superseded runs on the same branch are cancelled automatically. Frontend browser tests use one bounded Vitest thread so local Windows runs and CI execute the same deterministic worker model without process-spawn flakes.
 
 Run the same checks locally from the repository root:
 
