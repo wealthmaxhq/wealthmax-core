@@ -1,6 +1,7 @@
 ## Unreleased
 
 - Added authenticated global session revocation with an account security control.
+- Added resilient dashboard planning priorities derived from saved workspace data.
 
 ## 0.1.0 - 2026-08-26
 

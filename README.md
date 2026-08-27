@@ -19,6 +19,9 @@ goal-based monthly savings and allocation guidance. Recommendations are derived
 on demand from the current user's goals and are not stored. Dashboard services
 load independently, so available planning data remains visible during a partial
 service outage and failed requests can be retried in place.
+The dashboard also ranks up to three planning priorities from successfully
+loaded workspace data and the latest financial-health findings. Unavailable
+services never produce speculative actions.
 
 The portfolio workspace stores assets and liabilities and calculates net worth
 separately for each currency, avoiding misleading cross-currency totals.
