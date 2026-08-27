@@ -11,12 +11,14 @@ describe('OpenAPI contract', () => {
     const operations = Object.values(response.body.paths)
       .flatMap((path: any) => Object.entries(path))
       .filter(([method]) => ['get', 'post', 'put', 'patch', 'delete'].includes(method));
-    expect(operations).toHaveLength(30);
+    expect(operations).toHaveLength(31);
     expect(new Set(operations.map(([, operation]: any) => operation.operationId)).size)
-      .toBe(30);
+      .toBe(31);
 
     expect(response.body.paths['/api/auth/me'].delete.operationId)
       .toBe('deleteCurrentUser');
+    expect(response.body.paths['/api/auth/logout-all'].post.operationId)
+      .toBe('revokeAllSessions');
 
     expect(response.body.paths['/api/auth/register'].post.security).toBeUndefined();
     expect(response.body.paths['/api/auth/register'].post.responses['429'].description)

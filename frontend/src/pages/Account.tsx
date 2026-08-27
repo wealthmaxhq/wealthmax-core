@@ -1,6 +1,12 @@
 import { FormEvent, useState } from 'react';
 import axios from 'axios';
-import { changePassword, deleteCurrentUser, exportCurrentUserData, updateCurrentUser } from '../api';
+import {
+  changePassword,
+  deleteCurrentUser,
+  exportCurrentUserData,
+  revokeAllSessions,
+  updateCurrentUser,
+} from '../api';
 import { useAuth } from '../auth';
 
 function errorMessage(error: unknown): string {
@@ -28,6 +34,8 @@ export default function Account() {
   const [deleting, setDeleting] = useState(false);
   const [exporting, setExporting] = useState(false);
   const [exportError, setExportError] = useState('');
+  const [revokingSessions, setRevokingSessions] = useState(false);
+  const [sessionError, setSessionError] = useState('');
 
   async function saveProfile(event: FormEvent) {
     event.preventDefault();
@@ -105,6 +113,18 @@ export default function Account() {
     }
   }
 
+  async function signOutEverywhere() {
+    setSessionError('');
+    setRevokingSessions(true);
+    try {
+      await revokeAllSessions();
+      logout();
+    } catch (error) {
+      setSessionError(errorMessage(error));
+      setRevokingSessions(false);
+    }
+  }
+
   return (
     <main>
       <header className="page-header">
@@ -139,6 +159,12 @@ export default function Account() {
           <p className="muted">Download a private JSON copy of your profile and all WealthMax planning records.</p>
           {exportError && <div className="alert" role="alert">{exportError}</div>}
           <button className="primary-button" disabled={exporting} type="button" onClick={() => void downloadData()}>{exporting ? 'Preparing export…' : 'Download my data'}</button>
+        </section>
+        <section className="panel account-card data-zone">
+          <h2>Active sessions</h2>
+          <p className="muted">Immediately revoke every WealthMax sign-in, including this device. You can sign in again with your current password.</p>
+          {sessionError && <div className="alert" role="alert">{sessionError}</div>}
+          <button className="secondary-button" disabled={revokingSessions} type="button" onClick={() => void signOutEverywhere()}>{revokingSessions ? 'Signing out…' : 'Sign out everywhere'}</button>
         </section>
         <section className="panel account-card danger-zone">
           <h2>Delete account</h2>
