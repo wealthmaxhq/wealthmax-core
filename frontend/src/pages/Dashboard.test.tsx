@@ -53,7 +53,7 @@ describe('Dashboard', () => {
     } });
     api.getFinancialHealthHistory.mockResolvedValue({ data: { snapshots: [{
       id: 'health-1', currency: 'INR', score: 84, rating: 'good',
-      result: {}, recordedAt: '2026-08-05T00:00:00.000Z',
+      result: { findings: ['buildEmergencyFund'] }, recordedAt: '2026-08-05T00:00:00.000Z',
     }] } });
   });
 
@@ -75,6 +75,9 @@ describe('Dashboard', () => {
     expect(screen.getByText('60% stocks')).toBeInTheDocument();
     expect(screen.getByText('84/100')).toBeInTheDocument();
     expect(screen.getByText(/good ·/i)).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Your next best steps' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Strengthen your emergency fund' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Connect analysis to your goals' })).toBeInTheDocument();
   });
 
   test('renders deliberate empty states without showing irrelevant recommendations', async () => {
@@ -89,7 +92,26 @@ describe('Dashboard', () => {
     expect(screen.getByText('Add assets and liabilities')).toBeInTheDocument();
     expect(screen.getByText('Add a target date to plan ahead')).toBeInTheDocument();
     expect(screen.getByText('Complete your first check-in')).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Complete a financial health check-in' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Build your net-worth baseline' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Set your first financial goal' })).toBeInTheDocument();
     expect(screen.queryByRole('heading', { name: 'Fund your goals deliberately' })).not.toBeInTheDocument();
+  });
+
+  test('prioritizes health findings and limits the action list to three items', async () => {
+    api.getFinancialHealthHistory.mockResolvedValue({ data: { snapshots: [{
+      id: 'health-2', currency: 'INR', score: 42, rating: 'needsAttention',
+      result: { findings: ['buildEmergencyFund', 'reduceDebtBurden', 'increaseSavingsRate'] },
+      recordedAt: '2026-08-06T00:00:00.000Z',
+    }] } });
+    renderDashboard();
+
+    expect(await screen.findByRole('heading', { name: 'Strengthen your emergency fund' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Reduce debt pressure' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Increase goal funding' })).toBeInTheDocument();
+    expect(screen.queryByRole('heading', { name: 'Connect analysis to your goals' })).not.toBeInTheDocument();
+    expect(screen.getByText(/Priorities come only/).closest('section')?.querySelectorAll('article'))
+      .toHaveLength(3);
   });
 
   test('keeps successful planning data visible and retries a failed service', async () => {
@@ -105,6 +127,7 @@ describe('Dashboard', () => {
     expect(screen.getByText('Balanced')).toBeInTheDocument();
     expect(screen.getByText('84/100')).toBeInTheDocument();
     expect(screen.getByText('Add assets and liabilities')).toBeInTheDocument();
+    expect(screen.queryByRole('heading', { name: 'Build your net-worth baseline' })).not.toBeInTheDocument();
 
     await user.click(screen.getByRole('button', { name: 'Retry' }));
 

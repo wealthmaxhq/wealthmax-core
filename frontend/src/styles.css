@@ -194,6 +194,13 @@ textarea { resize: vertical; }
 .dashboard-reports a:hover { border-color: #9fc8ad; }
 .dashboard-reports small { display: block; margin-top: 6px; }
 .recommendations-panel { margin-top: 22px; }
+.planning-priorities { margin-top: 22px; }
+.priority-list { display: grid; gap: 12px; }
+.priority-list article { align-items: center; border: 1px solid #e3e9e1; border-radius: 12px; display: grid; gap: 15px; grid-template-columns: auto 1fr auto; padding: 16px; }
+.priority-list article > span { align-items: center; background: #eaf6ef; border-radius: 50%; color: #126c46; display: inline-flex; font-size: 12px; font-weight: 800; height: 30px; justify-content: center; width: 30px; }
+.priority-list h3 { font-size: 15px; margin: 0 0 4px; }
+.priority-list p { color: #66756b; font-size: 12px; line-height: 1.45; margin: 0; }
+.priority-list .secondary-link { white-space: nowrap; }
 .recommendation-summary { display: grid; gap: 14px; grid-template-columns: repeat(3, 1fr); }
 .recommendation-summary > div { background: #f1f6f2; border-radius: 12px; padding: 18px; }
 .recommendation-summary span, .recommendation-summary small { color: #66756b; display: block; }
@@ -260,6 +267,8 @@ textarea { resize: vertical; }
   .goal-editor { position: static; }
   .dashboard-header { align-items: start; flex-direction: column; }
   .dashboard-metrics, .dashboard-grid, .recommendation-summary { grid-template-columns: 1fr; }
+  .priority-list article { align-items: start; grid-template-columns: auto 1fr; }
+  .priority-list .secondary-link { grid-column: 2; }
   .health-components { grid-template-columns: 1fr; }
 }
 

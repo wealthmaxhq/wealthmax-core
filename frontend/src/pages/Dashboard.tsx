@@ -20,6 +20,20 @@ function message(error: unknown): string {
   return response.response?.data?.error || 'Your dashboard could not be loaded.';
 }
 
+type DashboardAvailability = {
+  goals: boolean;
+  reports: boolean;
+  portfolio: boolean;
+  health: boolean;
+};
+
+type PlanningPriority = {
+  title: string;
+  description: string;
+  action: string;
+  to: string;
+};
+
 export default function Dashboard() {
   const { user } = useAuth();
   const [goals, setGoals] = useState<Goal[]>([]);
@@ -30,6 +44,9 @@ export default function Dashboard() {
   const [latestHealth, setLatestHealth] = useState<FinancialHealthSnapshot | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [available, setAvailable] = useState<DashboardAvailability>({
+    goals: false, reports: false, portfolio: false, health: false,
+  });
 
   const loadDashboard = useCallback(async () => {
     setLoading(true);
@@ -52,6 +69,12 @@ export default function Dashboard() {
       const healthSnapshots = healthResult.value.data.snapshots;
       setLatestHealth(healthSnapshots[healthSnapshots.length - 1] ?? null);
     }
+    setAvailable((current) => ({
+      goals: current.goals || goalResult.status === 'fulfilled',
+      reports: current.reports || reportResult.status === 'fulfilled',
+      portfolio: current.portfolio || portfolioResult.status === 'fulfilled',
+      health: current.health || healthResult.status === 'fulfilled',
+    }));
     const failures = results
       .filter((result): result is PromiseRejectedResult => result.status === 'rejected')
       .map((result) => message(result.reason));
@@ -78,6 +101,61 @@ export default function Dashboard() {
   const nextGoal = [...goals]
     .filter((goal) => goal.targetDate)
     .sort((first, second) => first.targetDate!.localeCompare(second.targetDate!))[0];
+
+  const priorities = useMemo(() => {
+    const result: PlanningPriority[] = [];
+    const add = (priority: PlanningPriority) => {
+      if (!result.some((existing) => existing.title === priority.title)) result.push(priority);
+    };
+    if (available.health && !latestHealth) {
+      add({
+        title: 'Complete a financial health check-in',
+        description: 'Establish a baseline for emergency savings, debt burden, and savings rate.',
+        action: 'Start check-in', to: '/financial-health',
+      });
+    }
+    if (available.health && latestHealth) {
+      for (const finding of latestHealth.result.findings ?? []) {
+        if (finding === 'buildEmergencyFund') add({
+          title: 'Strengthen your emergency fund',
+          description: 'Your latest check-in identified liquid reserves as a priority.',
+          action: 'Review health plan', to: '/financial-health',
+        });
+        if (finding === 'reduceDebtBurden') add({
+          title: 'Reduce debt pressure',
+          description: 'Review liabilities and model how extra payments could improve cash flow.',
+          action: 'Review portfolio', to: '/portfolio',
+        });
+        if (finding === 'increaseSavingsRate') add({
+          title: 'Increase goal funding',
+          description: 'Use your goal plan to turn a higher savings rate into specific monthly targets.',
+          action: 'Review goals', to: '/goals',
+        });
+      }
+    }
+    if (available.portfolio && portfolioEntries.length === 0) add({
+      title: 'Build your net-worth baseline',
+      description: 'Add assets and liabilities to track net worth without mixing currencies.',
+      action: 'Add portfolio data', to: '/portfolio',
+    });
+    if (available.goals && goals.length === 0) add({
+      title: 'Set your first financial goal',
+      description: 'Define a target amount and date so WealthMax can calculate a monthly funding path.',
+      action: 'Create a goal', to: '/goals',
+    });
+    if (available.reports && available.goals && goals.length > 0 && reports.length === 0) add({
+      title: 'Compare your next money decision',
+      description: 'Model loan prepayment and investing on the same after-tax timeline.',
+      action: 'Build a report', to: '/reports',
+    });
+    if (available.reports && available.goals && goals.length > 0
+      && reports.some((report) => !report.goalId)) add({
+      title: 'Connect analysis to your goals',
+      description: 'Link unassigned decision reports so your planning context stays together.',
+      action: 'Organize reports', to: '/reports',
+    });
+    return result.slice(0, 3);
+  }, [available, goals, latestHealth, portfolioEntries.length, reports]);
 
   return (
     <main>
@@ -123,6 +201,23 @@ export default function Dashboard() {
               )}
             </section>
           </div>
+          {priorities.length > 0 && (
+            <section className="panel planning-priorities">
+              <div className="section-heading">
+                <div><p className="step">Planning priorities</p><h2>Your next best steps</h2></div>
+              </div>
+              <div className="priority-list">
+                {priorities.map((priority, index) => (
+                  <article key={priority.title}>
+                    <span aria-hidden="true">{index + 1}</span>
+                    <div><h3>{priority.title}</h3><p>{priority.description}</p></div>
+                    <Link className="secondary-link" to={priority.to}>{priority.action}</Link>
+                  </article>
+                ))}
+              </div>
+              <p className="muted recommendation-disclaimer">Priorities come only from your saved WealthMax data and latest check-in—not from external account activity.</p>
+            </section>
+          )}
           {recommendations && goals.length > 0 && (
             <section className="panel recommendations-panel">
               <div className="section-heading">
