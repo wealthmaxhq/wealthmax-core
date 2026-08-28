@@ -2,6 +2,7 @@
 
 - Added authenticated global session revocation with an account security control.
 - Added resilient dashboard planning priorities derived from saved workspace data.
+- Stabilized frontend browser tests with a bounded cross-platform worker model.
 
 ## 0.1.0 - 2026-08-26
 

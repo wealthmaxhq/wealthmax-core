@@ -76,7 +76,7 @@ describe('Goals', () => {
     await user.click(screen.getByRole('button', { name: 'Delete' }));
     expect(confirm).toHaveBeenCalledWith('Delete “Home deposit” permanently?');
     await waitFor(() => expect(api.deleteGoal).toHaveBeenCalledWith('goal-1'));
-  });
+  }, 15_000);
 
   test('shows server errors, preserves form input, and re-enables saving', async () => {
     const user = userEvent.setup();

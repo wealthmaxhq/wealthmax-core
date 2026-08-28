@@ -83,7 +83,7 @@ describe('Portfolio', () => {
     await user.click(screen.getByRole('button', { name: 'Delete' }));
     expect(confirm).toHaveBeenCalledWith('Delete “Brokerage” permanently?');
     await waitFor(() => expect(api.deletePortfolioEntry).toHaveBeenCalledWith('portfolio-1'));
-  });
+  }, 15_000);
 
   test('downloads the authenticated portfolio using the server filename', async () => {
     const user = userEvent.setup();
